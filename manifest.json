@@ -2,11 +2,11 @@
 {
     "display_name": "Persona Weaver (User人设生成器)",
     "name": "st-persona-weaver",
-    "version": "3.0.1",
+    "version": "3.0.2",
     "author": "Yellows & AI",
     "description": "AI辅助生成与润色User/NPC设定",
     "js": "index.js",
     "css": "style.css",
     "type": "extension",
-    "notes": "久违的大更新。包括但不限于\n1.图片形象参考 \n2.聊天记录推断&人设更新 \n3.模板生成与润色 \n4.diff对比加强 \n5.固定世界书 \n6.载入人设加强 \n7.多API预设保存 \n8.数据导入导出 ...\n写不完了，自己试试吧orz"
+    "notes": "小修改：1.润色对比按钮大小调整/n2.NPC 世界书条目名与触发词适配多NPC的情况"
 }
