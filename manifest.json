@@ -8,5 +8,5 @@
     "js": "index.js",
     "css": "style.css",
     "type": "extension",
-    "notes": "小修改：1.润色对比按钮大小调整\n2.NPC 世界书条目名与触发词适配多NPC的情况"
+    "notes": "1.润色对比按钮大小调整\n2.NPC 世界书条目名与触发词适配多NPC的情况"
 }
