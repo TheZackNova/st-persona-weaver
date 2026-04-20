@@ -2298,23 +2298,23 @@ function renderInlineDiff() {
     let html = '';
     currentDiffBlocks.forEach((block, index) => {
         if (block.type === 'equal') {
-            html += `<span class="pw-idiff-equal" contenteditable="true" data-idx="${index}">${_esc(block.value)}</span>`;
+            html += `<span class="pw-idiff-equal" data-idx="${index}">${_esc(block.value)}</span>`;
         } else {
             const isActiveOld = block.active === 'old';
             const isActiveNew = block.active === 'new';
             html += `<span class="pw-diff-group" data-index="${index}">`;
             if (block.oldText) {
-                html += `<span class="pw-idiff-old ${isActiveOld ? 'active' : 'inactive'}" ${isActiveOld ? 'contenteditable="true"' : ''} data-idx="${index}" title="点击保留旧版">${_esc(block.oldText)}</span>`;
+                html += `<span class="pw-idiff-old ${isActiveOld ? 'active' : 'inactive'}" contenteditable="${isActiveOld ? 'true' : 'false'}" data-idx="${index}" title="点击保留旧版">${_esc(block.oldText)}</span>`;
             }
             if (block.newText) {
-                html += `<span class="pw-idiff-new ${isActiveNew ? 'active' : 'inactive'}" ${isActiveNew ? 'contenteditable="true"' : ''} data-idx="${index}" title="点击保留新版">${_esc(block.newText)}</span>`;
+                html += `<span class="pw-idiff-new ${isActiveNew ? 'active' : 'inactive'}" contenteditable="${isActiveNew ? 'true' : 'false'}" data-idx="${index}" title="点击保留新版">${_esc(block.newText)}</span>`;
             }
             html += `</span>`;
         }
     });
 
     const $container = $('#pw-diff-merge-list');
-    $container.html(html);
+    $container.attr('contenteditable', 'true').html(html);
 
     let changeCount = currentDiffBlocks.filter(b => b.type === 'diff').length;
     if (changeCount === 0) toastr.info("没有检测到内容变化");
@@ -3128,7 +3128,7 @@ function bindEvents() {
         const idx = $(this).data('idx');
         currentDiffBlocks[idx].active = 'old';
         $(this).addClass('active').removeClass('inactive').attr('contenteditable', 'true');
-        $(this).siblings('.pw-idiff-new').addClass('inactive').removeClass('active').removeAttr('contenteditable');
+        $(this).siblings('.pw-idiff-new').addClass('inactive').removeClass('active').attr('contenteditable', 'false');
     });
     $(document).on('mousedown.pw', '.pw-idiff-new', function () {
         if (!$('#pw-diff-merge-list').hasClass('pw-diff-mode-all')) return;
@@ -3136,20 +3136,23 @@ function bindEvents() {
         const idx = $(this).data('idx');
         currentDiffBlocks[idx].active = 'new';
         $(this).addClass('active').removeClass('inactive').attr('contenteditable', 'true');
-        $(this).siblings('.pw-idiff-old').addClass('inactive').removeClass('active').removeAttr('contenteditable');
+        $(this).siblings('.pw-idiff-old').addClass('inactive').removeClass('active').attr('contenteditable', 'false');
     });
 
-    $(document).on('input.pw', '.pw-idiff-old.active[contenteditable]', function () {
-        const idx = $(this).data('idx');
-        if (idx !== undefined) currentDiffBlocks[idx].oldText = $(this).text();
-    });
-    $(document).on('input.pw', '.pw-idiff-new.active[contenteditable]', function () {
-        const idx = $(this).data('idx');
-        if (idx !== undefined) currentDiffBlocks[idx].newText = $(this).text();
-    });
-    $(document).on('input.pw', '.pw-idiff-equal[contenteditable]', function () {
-        const idx = $(this).data('idx');
-        if (idx !== undefined) currentDiffBlocks[idx].value = $(this).text();
+    // 容器级 input：跨 span 编辑后统一回写到 currentDiffBlocks
+    $(document).on('input.pw', '#pw-diff-merge-list', function () {
+        $(this).find('.pw-idiff-equal').each(function () {
+            const idx = $(this).data('idx');
+            if (idx !== undefined && currentDiffBlocks[idx]) currentDiffBlocks[idx].value = $(this).text();
+        });
+        $(this).find('.pw-idiff-old.active').each(function () {
+            const idx = $(this).data('idx');
+            if (idx !== undefined && currentDiffBlocks[idx]) currentDiffBlocks[idx].oldText = $(this).text();
+        });
+        $(this).find('.pw-idiff-new.active').each(function () {
+            const idx = $(this).data('idx');
+            if (idx !== undefined && currentDiffBlocks[idx]) currentDiffBlocks[idx].newText = $(this).text();
+        });
     });
 
     // Refine (Persona)
