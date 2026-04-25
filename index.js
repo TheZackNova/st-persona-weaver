@@ -3,7 +3,7 @@ import { extension_settings, getContext } from "../../../extensions.js";
 import { saveSettingsDebounced, callPopup, getRequestHeaders, saveChat, reloadCurrentChat, saveCharacterDebounced } from "../../../../script.js";
 
 const extensionName = "st-persona-weaver";
-const CURRENT_VERSION = "3.3"; // Claude/Anthropic + OpenAI-compatible multi-model + Avatar/Diff fixes
+const CURRENT_VERSION = "3.4.4"; // Auto-resolve max_tokens by model name (no user config)
 
 const UPDATE_CHECK_URL = "https://raw.githubusercontent.com/sssilvia27/st-persona-weaver/main/manifest.json";
 
@@ -272,16 +272,20 @@ const defaultChatInferPrompt =
 [Requirements]:
 1. Carefully analyze the chat history. Focus on how "{{user}}" speaks, behaves, reacts, and expresses emotions.
 2. Extract personality traits, speech patterns, values, habits, relationships, and other characteristics revealed through dialogue.
-3. Base the profile ONLY on evidence from the chat history. Do NOT invent unsupported traits.
-4. If certain fields cannot be determined, make reasonable inferences.
-5. If an existing profile is provided above, PRESERVE content still consistent with the chat, ADD newly revealed traits, UPDATE evolved traits, and ENRICH with observed patterns.
+3. Priority of information sources:
+   (a) Direct evidence from the chat history and source materials.
+   (b) Attached avatar / reference images (for appearance-related fields).
+   (c) Reasonable, context-consistent inference derived from tone, worldview, relationships, and common sense.
+4. MANDATORY COMPLETENESS — NEVER leave any field blank. You MUST fill EVERY leaf field in the target schema with a concrete, non-empty value. Do NOT output empty strings, "未知", "unknown", "N/A", "待定", "TBD", "暂无", null, "-", or placeholders. If a field cannot be directly determined from chat/images, generate the most reasonable value consistent with the observed personality, context, and worldview — but do NOT contradict existing evidence.
+5. If an existing profile is provided above, PRESERVE content still consistent with the chat, ADD newly revealed traits, UPDATE evolved traits, and ENRICH with observed patterns. Any field that was previously blank MUST now be filled.
 6. If no existing profile is provided, create a complete new profile from scratch.
-7. Pay special attention to: tone of voice, emotional reactions, decision-making patterns, relationship dynamics, recurring themes.
+7. When avatar / reference images are attached, you MUST use them to fully populate appearance-related fields (hair, eyes, skin, face, build, typical outfit, etc.). Appearance fields must never remain blank when an image is provided.
+8. Pay special attention to: tone of voice, emotional reactions, decision-making patterns, relationship dynamics, recurring themes.
 
-[Constraint]: STRICTLY YAML DATA ONLY. No explanations, no scene descriptions.
+[Constraint]: STRICTLY YAML DATA ONLY. No explanations, no scene descriptions. Every leaf key in the schema MUST have a non-empty value. Before finishing, silently re-check the output and fill in any field that is still blank.
 
 [Action]:
-Output the COMPLETE YAML profile matching the schema.`;
+Output the COMPLETE YAML profile matching the schema, with every field populated.`;
 
 // 6. NPC 聊天推断/更新 Prompt
 const defaultNpcChatInferPrompt =
@@ -309,15 +313,20 @@ const defaultNpcChatInferPrompt =
 1. Analyze the chat history for NPC behavior, speech patterns, personality traits, and role in the story.
 2. Each NPC should be described in relation to the current story context and world setting.
 3. Relationship with {{user}} and {{char}} should be defined based on chat evidence.
-4. Base the profile ONLY on evidence from the chat history. Do NOT invent unsupported traits.
-5. If an existing profile is provided above, PRESERVE content still consistent with the chat, ADD newly revealed traits, UPDATE evolved traits, and ENRICH with observed patterns.
-6. If no existing profile is provided, create a complete new profile from scratch.
-7. If generating multiple NPCs, separate each with a line containing ONLY "---".
+4. Priority of information sources:
+   (a) Direct evidence from the chat history and story context.
+   (b) Attached reference images (for appearance-related fields of the matching NPC).
+   (c) Reasonable, context-consistent inference derived from the worldview, the NPC's role, tone, and interactions.
+5. MANDATORY COMPLETENESS — NEVER leave any field blank. You MUST fill EVERY leaf field in the target schema for each NPC with a concrete, non-empty value. Do NOT output empty strings, "未知", "unknown", "N/A", "待定", "TBD", "暂无", null, "-", or placeholders. When direct evidence is missing, generate the most reasonable value consistent with the NPC's observed behavior, role, and the story's worldview — without contradicting existing evidence.
+6. When reference images are attached, you MUST use them to fully populate appearance-related fields of the corresponding NPC(s). Appearance fields must never remain blank when an image is provided.
+7. If an existing profile is provided above, PRESERVE content still consistent with the chat, ADD newly revealed traits, UPDATE evolved traits, and ENRICH with observed patterns. Any field that was previously blank MUST now be filled.
+8. If no existing profile is provided, create a complete new profile from scratch.
+9. If generating multiple NPCs, separate each with a line containing ONLY "---".
 
-[Constraint]: STRICTLY YAML DATA ONLY. No explanations, no scene descriptions.
+[Constraint]: STRICTLY YAML DATA ONLY. No explanations, no scene descriptions. Every leaf key in the schema MUST have a non-empty value. Before finishing, silently re-check the output and fill in any field that is still blank.
 
 [Action]:
-Output the COMPLETE YAML profile matching the schema.`;
+Output the COMPLETE YAML profile matching the schema, with every field populated.`;
 
 // Legacy alias
 const defaultChatUpdatePrompt = defaultChatInferPrompt;
@@ -336,7 +345,12 @@ const defaultSettings = {
     autoSwitchPersona: true, syncToWorldInfo: false,
     historyLimit: 9999, 
     apiSource: 'main',
-    indepApiUrl: 'https://api.openai.com/v1', indepApiKey: '', indepApiModel: 'gpt-3.5-turbo'
+    indepApiUrl: 'https://api.openai.com/v1', indepApiKey: '', indepApiModel: 'gpt-3.5-turbo',
+    // 独立 API 请求超时（秒）。Claude / 第三方中转站输出长 YAML 经常 >2min，默认给 5 min。
+    indepTimeout: 300,
+    // 流式输出。默认开启，避免 Cloudflare / 酒馆后端 / 中转站的 504 Gateway Timeout。
+    indepStream: true
+    // max_tokens 由 resolveMaxTokens() 按模型名自动推断，不放在设置里
 };
 
 const TEXT = {
@@ -1028,7 +1042,18 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
     
     let responseContent = "";
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000); 
+    // 超时可配置：默认 300 秒（v3.4 起），原先是硬编码 120 秒，Claude / 中转站经常超时
+    const timeoutSec = Number(apiConfig && apiConfig.indepTimeout) > 0
+        ? Number(apiConfig.indepTimeout)
+        : getIndepTimeoutSec();
+    let timedOutBySelf = false;
+    const timeoutId = setTimeout(() => { timedOutBySelf = true; try { controller.abort(); } catch {} }, timeoutSec * 1000);
+    // 流式开关：默认 ON。非流式请求长 YAML 时会被反代 504 Gateway Timeout。
+    const useStream = (apiConfig && typeof apiConfig.indepStream === 'boolean')
+        ? apiConfig.indepStream
+        : getIndepStreamEnabled();
+    // max_tokens 由 resolveMaxTokens() 按模型名自动推断，不再由用户配置
+    console.log(`[PW] Request timeout=${timeoutSec}s, stream=${useStream}`);
 
     try {
         const promptArray = [];
@@ -1039,8 +1064,8 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
 
         if (selectedAvatarImages.length > 0) {
             const avatarHint = isNpcMode
-                ? `[Reference Image(s): The above ${selectedAvatarImages.length > 1 ? 'images are' : 'image is'} provided as visual reference for the NPC character(s). Use them to inform appearance descriptions in the persona.]`
-                : `[User Avatar Image(s): The above ${selectedAvatarImages.length > 1 ? 'images are' : 'image is'} the user's avatar/profile pictures. Use them as visual reference for generating appearance-related descriptions in the persona.]`;
+                ? `[Reference Image(s): The above ${selectedAvatarImages.length > 1 ? 'images are' : 'image is'} provided as visual reference for the NPC character(s). Use them to FULLY populate appearance-related fields (hair, eyes, skin tone, face shape, build, typical outfit, age impression, etc.) — appearance fields MUST NOT remain blank. For all non-appearance fields, still output concrete, context-consistent values; the final YAML MUST have NO empty fields.]`
+                : `[User Avatar Image(s): The above ${selectedAvatarImages.length > 1 ? 'images are' : 'image is'} the user's avatar/profile pictures. Use them to FULLY populate appearance-related fields (hair, eyes, skin tone, face shape, build, typical outfit, age impression, etc.) — appearance fields MUST NOT remain blank. For fields not visible in the image, still produce reasonable, context-consistent values based on chat history, source materials, and the overall persona; the final YAML MUST have NO empty fields.]`;
             const contentBlocks = [];
             selectedAvatarImages.forEach(b64 => {
                 contentBlocks.push({ type: "image_url", image_url: { url: b64 } });
@@ -1096,13 +1121,17 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
                         'x-api-key': apiConfig.indepApiKey,
                         'anthropic-version': '2023-06-01'
                     };
-                    body = JSON.stringify({
+                    // Anthropic 必填 max_tokens；按模型名自动挑安全值（Claude 3.5=8192, 3.7/4/4.5=32000, 3=4096）
+                    const anthropicMaxTokens = resolveMaxTokens(apiConfig.indepApiModel, true) || 8192;
+                    const anthropicPayload = {
                         model: apiConfig.indepApiModel,
                         system: systemParts.join('\n\n'),
                         messages: nonSystem,
-                        max_tokens: 16384,
+                        max_tokens: anthropicMaxTokens,
                         temperature: 1.00
-                    });
+                    };
+                    if (useStream) anthropicPayload.stream = true;
+                    body = JSON.stringify(anthropicPayload);
                 } else {
                     // OpenAI 兼容模式：支持原生 OpenAI / OpenRouter / DeepSeek / Groq / xAI /
                     // Mistral / 01.AI / 本地 llama.cpp / 各类中转站 等
@@ -1118,11 +1147,17 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
                     const payload = {
                         model: apiConfig.indepApiModel,
                         messages: messages,
-                        temperature: 1.00,
-                        // 兼容大多数模型上限（GPT-4o/Claude/Gemini/DS/本地模型），
-                        // 避免硬编码 16384 触发部分小模型 400。
-                        max_tokens: 8192
+                        temperature: 1.00
                     };
+                    // OpenAI 兼容：默认不发送 max_tokens，让服务端用模型默认最大值（长 YAML 不会被截断）
+                    // 仅当隐藏覆盖写了非 0 值时才发送
+                    const openaiMaxTokens = resolveMaxTokens(apiConfig.indepApiModel, false);
+                    if (openaiMaxTokens > 0) payload.max_tokens = openaiMaxTokens;
+                    if (useStream) {
+                        payload.stream = true;
+                        // OpenAI 流式建议顺便带上 usage
+                        payload.stream_options = { include_usage: false };
+                    }
                     body = JSON.stringify(payload);
                 }
 
@@ -1137,7 +1172,13 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
                     if (errText.length > 200) errText = errText.substring(0, 200) + "...";
                     throw new Error(`API Error (${res.status}): ${errText}`);
                 }
-                
+
+                // 流式路径：解析 SSE，返回拼接后的完整文本
+                if (useStream) {
+                    return await readSSEResponse(res, isAnthropic, null);
+                }
+
+                // 非流式路径：整体 JSON 解析（保留原逻辑）
                 const json = await res.json();
                 if (isAnthropic) {
                     return json.content[0].text;
@@ -1151,6 +1192,8 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
                 throw new Error("无法解析 API 返回格式");
             } else {
                 if (window.TavernHelper && typeof window.TavernHelper.generateRaw === 'function') {
+                    // should_stream 让 TavernHelper 走流式管道，避免 Cloudflare / 酒馆 Node 后端
+                    // 在等完整响应时 504。generateRaw 内部会累积 token 后一次性返回完整字符串。
                     return await window.TavernHelper.generateRaw({
                         user_input: '', 
                         ordered_prompts: messages,
@@ -1159,7 +1202,8 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
                             char_description: '', char_personality: '', scenario: '', dialogue_examples: '',
                             chat_history: { prompts: [], with_depth_entries: false, author_note: '' }
                         },
-                        injects: [], max_chat_history: 0
+                        injects: [], max_chat_history: 0,
+                        should_stream: useStream
                     });
                 } else {
                     throw new Error("ST版本过旧或未安装 TavernHelper");
@@ -1170,14 +1214,27 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
         try {
             responseContent = await doRequest(promptArray);
         } catch (err) {
-            // [Fix 12] Catch 400 errors specifically for provider constraints
-            const errStr = err.toString().toLowerCase();
-            const isBadRequest = errStr.includes('400') || errStr.includes('bad request') || errStr.includes('invalid');
-            
+            // 分类：
+            //   1) 我们自己触发的超时（timedOutBySelf）—— 明确提示超时 + 指引，不做自动重试（再试也一样超时）
+            //   2) 其它 AbortError / 网络层错误（TypeError: Failed to fetch 等）—— 给出网络层原因
+            //   3) 400 / Bad Request + 有 prefill —— 去掉 prefill 重试（原有兼容逻辑）
+            //   4) 其它 —— 原样抛出
+            const errStr = (err && (err.message || err.toString()) || '').toString();
+            const errLower = errStr.toLowerCase();
+            const isAbort = err && (err.name === 'AbortError' || errLower.includes('abort'));
+            const isNetwork = err && (err.name === 'TypeError' || errLower.includes('failed to fetch') || errLower.includes('networkerror'));
+            const isBadRequest = errLower.includes('400') || errLower.includes('bad request') || errLower.includes('invalid');
+
+            if (timedOutBySelf || (isAbort && controller.signal.aborted)) {
+                throw new Error(`请求超时 (${timeoutSec}s)：第三方 / Claude 中转站响应过慢。可在「API 设置 → 请求超时」里调大该值（建议 300~600 秒），或检查中转站 / 网络稳定性。`);
+            }
+
             if (prefillContent && isBadRequest) {
                 console.warn("[PW] Generation failed (400/Bad Request), retrying without prefill...", err);
                 toastr.info("API 返回 400 错误 (可能是 Gemini 等模型不支持 Prefill)，正在尝试兼容模式重试...");
                 responseContent = await doRequest(promptArrayNoPrefill);
+            } else if (isNetwork) {
+                throw new Error(`网络请求失败：${errStr}。请检查中转站地址、API Key、网络连通性（梯子 / 公司网络代理等可能拦截）。`);
             } else {
                 throw err;
             }
@@ -1231,6 +1288,16 @@ function loadData() {
         const p = JSON.parse(localStorage.getItem(STORAGE_KEY_PROMPTS));
         const migrateTemplatePrompt = (stored, def) =>
             (stored && stored.includes('{{userRequirements}}')) ? stored : def;
+        // 聊天推断 Prompt 迁移：如果用户还在使用旧版默认(含旧规则但没有新的"MANDATORY COMPLETENESS"保护条款)，
+        // 自动升级到新默认以修复"字段留空"的问题；若用户有深度自定义则保留。
+        const migrateChatInferPrompt = (stored, def) => {
+            if (!stored) return def;
+            const hasOldRule = stored.includes('Base the profile ONLY on evidence from the chat history. Do NOT invent unsupported traits.')
+                || stored.includes('If certain fields cannot be determined, make reasonable inferences.');
+            const hasNewGuard = stored.includes('MANDATORY COMPLETENESS') || stored.includes('NEVER leave any field blank');
+            if (hasOldRule && !hasNewGuard) return def;
+            return stored;
+        };
         promptsCache = {
             templateGen: migrateTemplatePrompt(p && p.templateGen, defaultTemplateGenPrompt),
             npcTemplateGen: migrateTemplatePrompt(p && p.npcTemplateGen, defaultNpcTemplateGenPrompt),
@@ -1238,8 +1305,8 @@ function loadData() {
             npcTemplateRefine: defaultNpcTemplateRefinePrompt,
             personaGen: (p && p.personaGen) ? p.personaGen : defaultPersonaGenPrompt,
             npcGen: (p && p.npcGen) ? p.npcGen : defaultNpcGenPrompt, 
-            chatInfer: (p && p.chatInfer) ? p.chatInfer : defaultChatInferPrompt,
-            npcChatInfer: (p && p.npcChatInfer) ? p.npcChatInfer : defaultNpcChatInferPrompt,
+            chatInfer: migrateChatInferPrompt(p && p.chatInfer, defaultChatInferPrompt),
+            npcChatInfer: migrateChatInferPrompt(p && p.npcChatInfer, defaultNpcChatInferPrompt),
             initial: (p && p.initial) ? p.initial : fallbackSystemPrompt 
         };
     } catch { 
@@ -1350,6 +1417,176 @@ function saveWiSelection(bookName, uids) {
 
 function saveState(data) { safeLocalStorageSet(STORAGE_KEY_STATE, JSON.stringify(data)); }
 function loadState() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY_STATE)) || {}; } catch { return {}; } }
+
+// 读取独立 API 的请求超时（秒）。优先级：DOM 输入 > 已保存配置 > defaultSettings > 硬编码 300。
+// 做了 30–1800 秒的区间夹取，避免用户写 0 / 几秒这种废值把请求立刻打挂。
+function getIndepTimeoutSec() {
+    let v = 0;
+    try {
+        const $el = (typeof $ === 'function') ? $('#pw-indep-timeout') : null;
+        if ($el && $el.length) v = parseInt($el.val(), 10) || 0;
+        if (!v) {
+            const saved = loadState();
+            if (saved && saved.localConfig && Number(saved.localConfig.indepTimeout) > 0) {
+                v = Number(saved.localConfig.indepTimeout);
+            }
+        }
+        if (!v && defaultSettings && Number(defaultSettings.indepTimeout) > 0) {
+            v = Number(defaultSettings.indepTimeout);
+        }
+    } catch {}
+    if (!v || v < 30) v = 300;      // 下限 30 秒，避免把请求秒 abort
+    if (v > 1800) v = 1800;          // 上限 30 分钟，防止浏览器挂太久
+    return v;
+}
+
+function getIndepStreamEnabled() {
+    try {
+        const $el = (typeof $ === 'function') ? $('#pw-indep-stream') : null;
+        if ($el && $el.length) return !!$el.prop('checked');
+        const saved = loadState();
+        if (saved && saved.localConfig && typeof saved.localConfig.indepStream === 'boolean') {
+            return saved.localConfig.indepStream;
+        }
+    } catch {}
+    return true;
+}
+
+// 根据模型名自动推断合理的 max_tokens，无需用户配置。
+// 若用户想强制覆盖，仍保留隐藏入口：手动在 DevTools 给 localStorage 的
+// pw_state_* → localConfig.indepMaxTokensOverride 写一个正整数即可。
+// （特地换了 key，避免 v3.4.3 残留的 indepMaxTokens=32000 把 Claude 3.5 打成 400）
+// 返回 0 表示"不发送 max_tokens 字段"，仅 OpenAI 兼容分支可用；Anthropic 必填故永远不返回 0。
+function resolveMaxTokens(modelName, isAnthropic) {
+    // 1) 隐藏的手动覆盖（仅极端场景使用）
+    try {
+        const saved = loadState();
+        if (saved && saved.localConfig && Number.isInteger(saved.localConfig.indepMaxTokensOverride)) {
+            const v = saved.localConfig.indepMaxTokensOverride;
+            if (v >= 0 && v <= 200000) return v;
+        }
+    } catch {}
+
+    const m = String(modelName || '').toLowerCase();
+
+    if (isAnthropic) {
+        // Claude 4 / 4.x 系列 (sonnet-4, opus-4, sonnet-4-5, opus-4-1, haiku-4-5 等)：
+        // 上限 32K~64K，取安全值 32000
+        if (/claude-(?:[a-z]+-)?4(?:[-.]|$|\b)/.test(m)) return 32000;
+        // Claude 3.7 Sonnet：上限 64K，取安全值 32000
+        if (/claude-3[-.]7/.test(m)) return 32000;
+        // Claude 3.5 (Sonnet / Haiku)：硬限 8192
+        if (/claude-3[-.]5/.test(m)) return 8192;
+        // Claude 3 原版 (opus/sonnet/haiku 20240229~20240307)：硬限 4096
+        if (/claude-3-(?:opus|sonnet|haiku)/.test(m)) return 4096;
+        // Claude 2 / 未识别型号：安全中值 8192
+        return 8192;
+    }
+
+    // OpenAI 兼容分支（含 GPT / Gemini / DeepSeek / OpenRouter / 中转站 / 本地模型）
+    // 返回 0 让调用端省略 max_tokens 字段，服务端使用模型默认最大值 —— 对长 YAML 最友好。
+    return 0;
+}
+
+// SSE 流式响应解析。兼容：
+//   - OpenAI 兼容：`data: {"choices":[{"delta":{"content":"..."}}]}` / `data: [DONE]`
+//   - Anthropic  ：`event: content_block_delta` + `data: {"delta":{"type":"text_delta","text":"..."}}`
+//   - 忽略 ping / 心跳 / 空 event，对不完整 JSON 静默跳过
+// 每收到 chunk 就回调 onDelta(text) 供 UI 渐进显示（目前 Persona Weaver 不用，留做扩展）。
+async function readSSEResponse(res, isAnthropic, onDelta) {
+    if (!res.body || !res.body.getReader) {
+        const text = await res.text();
+        throw new Error("当前浏览器不支持 Fetch 流式读取，无法解析流式响应。请关闭『流式输出』再试。原始返回前 200 字: " + text.slice(0, 200));
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    let fullText = '';
+    let sawAnyDelta = false;
+
+    const processEvent = (event) => {
+        const lines = event.split('\n');
+        for (const rawLine of lines) {
+            const line = rawLine.replace(/\r$/, '');
+            if (!line.startsWith('data:')) continue;
+            const dataStr = line.substring(5).trim();
+            if (!dataStr || dataStr === '[DONE]') continue;
+            let json;
+            try { json = JSON.parse(dataStr); } catch { continue; }
+
+            let piece = '';
+            if (isAnthropic) {
+                // content_block_delta: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"..."}}
+                if (json.type === 'content_block_delta' && json.delta) {
+                    if (json.delta.type === 'text_delta' && typeof json.delta.text === 'string') {
+                        piece = json.delta.text;
+                    } else if (typeof json.delta.text === 'string') {
+                        piece = json.delta.text;
+                    }
+                }
+                // 有些中转站直接包 message_delta.delta.text
+                else if (json.type === 'message_delta' && json.delta && typeof json.delta.text === 'string') {
+                    piece = json.delta.text;
+                }
+                // 有些把文本放在 completion 字段
+                else if (typeof json.completion === 'string') {
+                    piece = json.completion;
+                }
+                // 错误帧
+                else if (json.type === 'error' && json.error) {
+                    throw new Error(`Anthropic 流式错误: ${json.error.message || JSON.stringify(json.error)}`);
+                }
+            } else {
+                // OpenAI 兼容
+                const choices = json.choices;
+                if (Array.isArray(choices) && choices[0]) {
+                    const delta = choices[0].delta || choices[0].message || {};
+                    if (typeof delta.content === 'string') {
+                        piece = delta.content;
+                    } else if (Array.isArray(delta.content)) {
+                        // 有些兼容实现用数组：[{type:'text', text:'...'}]
+                        piece = delta.content.map(b => (b && typeof b.text === 'string') ? b.text : '').join('');
+                    }
+                }
+                // 错误帧（部分中转站在 stream 里塞 error 对象）
+                if (json.error && (json.error.message || typeof json.error === 'string')) {
+                    throw new Error(`API 流式错误: ${json.error.message || json.error}`);
+                }
+            }
+            if (piece) {
+                fullText += piece;
+                sawAnyDelta = true;
+                if (typeof onDelta === 'function') { try { onDelta(piece); } catch {} }
+            }
+        }
+    };
+
+    while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        // SSE 事件以空行分隔，同时兼容 \r\n\r\n
+        let idx;
+        while (true) {
+            const a = buffer.indexOf('\n\n');
+            const b = buffer.indexOf('\r\n\r\n');
+            if (a === -1 && b === -1) break;
+            idx = (a === -1) ? b : (b === -1 ? a : Math.min(a, b));
+            const sep = (idx === b) ? 4 : 2;
+            const event = buffer.substring(0, idx);
+            buffer = buffer.substring(idx + sep);
+            if (event.trim().length > 0) processEvent(event);
+        }
+    }
+    // 尾巴可能没有空行结束，补处理一次
+    buffer += decoder.decode();
+    if (buffer.trim().length > 0) processEvent(buffer);
+
+    if (!fullText && !sawAnyDelta) {
+        throw new Error("流式响应为空（可能被反代吞掉或模型未返回文本）。可尝试关闭『流式输出』切回非流式模式。");
+    }
+    return fullText;
+}
 
 function saveAvatarImages() { safeLocalStorageSet(STORAGE_KEY_AVATAR_IMAGES, JSON.stringify(avatarImagesCache)); }
 function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
@@ -1991,6 +2228,21 @@ async function openCreatorPopup() {
                             <select id="pw-api-model-select" class="pw-select" style="flex:1;"><option value="${config.indepApiModel}">${config.indepApiModel}</option></select>
                             <button id="pw-api-fetch" class="pw-btn primary pw-api-fetch-btn" title="刷新模型列表" style="width:auto;"><i class="fa-solid fa-sync"></i></button>
                             <button id="pw-api-test" class="pw-btn primary" style="width:auto;" title="测试连接"><i class="fa-solid fa-plug"></i></button>
+                        </div>
+                    </div>
+                    <div class="pw-row">
+                        <label title="单次请求最长等待时间。Claude / 第三方中转站输出长 YAML 常需 2~5 分钟，默认 300 秒。超时后会提示而不再静默失败。">请求超时 (秒)</label>
+                        <input type="number" id="pw-indep-timeout" class="pw-input" min="30" max="1800" step="10"
+                            value="${Number(config.indepTimeout) > 0 ? Number(config.indepTimeout) : 300}"
+                            style="flex:1;" placeholder="300">
+                    </div>
+                    <div class="pw-row">
+                        <label title="开启后以 SSE 流式方式接收响应，避免 Cloudflare / 酒馆后端 / 中转站在等待完整响应时返回 504 Gateway Timeout。此开关同时作用于独立 API 和主 API。">流式输出</label>
+                        <div style="flex:1; display:flex; align-items:center; gap:8px;">
+                            <label style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+                                <input type="checkbox" id="pw-indep-stream" ${config.indepStream !== false ? 'checked' : ''}>
+                                <span style="opacity:0.85;">启用 (推荐，避免 504)</span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -3052,6 +3304,11 @@ function bindEvents() {
                 currentLc.indepApiUrl = $('#pw-api-url').val();
                 currentLc.indepApiKey = $('#pw-api-key').val();
                 currentLc.indepApiModel = $('#pw-api-model-select').val() || $('#pw-api-model').val();
+                const timeoutInput = parseInt($('#pw-indep-timeout').val(), 10);
+                if (timeoutInput > 0) currentLc.indepTimeout = Math.min(1800, Math.max(30, timeoutInput));
+                const $streamEl = $('#pw-indep-stream');
+                if ($streamEl.length) currentLc.indepStream = $streamEl.prop('checked');
+                // max_tokens 现在由 resolveMaxTokens() 按模型名自动推断，不再有 UI 可配置
                 currentLc.extraBooks = window.pwExtraBooks ||[];
 
                 // --- 自动热保存至当前选中配置 ---
@@ -3080,7 +3337,7 @@ function bindEvents() {
         }, 1200); 
     };           
     
-    $(document).on('input.pw change.pw', '#pw-request, #pw-result-text, #pw-wi-toggle, .pw-input, .pw-select', saveCurrentState);
+    $(document).on('input.pw change.pw', '#pw-request, #pw-result-text, #pw-wi-toggle, #pw-indep-stream, .pw-input, .pw-select', saveCurrentState);
 
     // --- 文本框焦点切换：点击哪个展开哪个 ---
     $(document).on('focus.pw', '#pw-request', function() {
