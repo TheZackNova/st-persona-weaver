@@ -286,7 +286,7 @@
 .pw-template-footer { display: flex; justify-content: space-between; align-items: center; background: rgba(128,128,128,0.1); padding: 5px 10px; border-top: 1px solid var(--pw-border); }
 
 /* Shortcuts & Vars */
-.pw-shortcut-bar { display: flex; gap: 5px; align-items: center; }
+.pw-shortcut-bar { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
 .pw-shortcut-btn, .pw-var-btn { 
     display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 5px 2px; min-width: 50px; 
@@ -310,7 +310,9 @@
 .pw-refine-input { flex: 1; border: none; background: transparent; padding: 10px; font-size: 0.95em; color: var(--pw-text-main); resize: none; overflow-y: auto; min-height: 56px; max-height: 56px; line-height: 1.5; }
 .pw-refine-btn-vertical { width: 44px; cursor: pointer; background: var(--SmartThemeQuoteColor, #83c168); border-left: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #fff; font-weight: bold; transition: all 0.2s; flex-shrink: 0; }
 .pw-refine-btn-vertical:hover { filter: brightness(1.1); }
-.pw-refine-btn-text { writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 2px; }
+/* text-orientation: mixed — Latin/Vietnamese rotates 90deg instead of stacking one
+   glyph per line (upright), which would make "Trau chuot" overflow the 44px column. */
+.pw-refine-btn-text { writing-mode: vertical-rl; text-orientation: mixed; letter-spacing: 1px; }
 .pw-float-quote-btn { position: fixed; top: 40%; right: 0; background: var(--pw-paper-bg); color: var(--pw-text-main); padding: 8px 12px; border-radius: 20px 0 0 20px; font-weight: bold; font-size: 0.85em; box-shadow: -2px 2px 8px rgba(0,0,0,0.4); cursor: pointer; z-index: 9999; display: none; align-items: center; gap: 4px; border: 1px solid var(--pw-border); border-right: none; backdrop-filter: blur(5px); }
 
 /* Load Overlay (Theme-Adaptive) */
@@ -1067,4 +1069,24 @@
     .pw-avatar-strip-img { width: 32px; height: 32px; }
     .pw-avatar-add-btn { width: 28px; height: 28px; }
     .pw-context-row { padding: 6px 8px; font-size: 0.9em; }
+}
+
+/* =========================================
+   Vietnamese layout fit
+   Vietnamese labels run 2-4x longer than the original Chinese ones, so the
+   fixed-width, nowrap chrome needs a little more room to breathe.
+========================================= */
+.pw-tab { padding: 6px 9px; font-size: 0.85em; }
+
+/* Let the long "Nạp nhân vật có sẵn" button give way instead of pushing the
+   mode toggle off the row on narrow screens. */
+.pw-load-btn { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* Diacritics sit above the cap height; keep descenders/marks from clipping. */
+.pw-mode-item, .pw-tab, .pw-btn, .pw-load-btn, .pw-section-label { line-height: 1.35; }
+
+@media screen and (max-width: 600px) {
+    .pw-tab { padding: 5px 7px; font-size: 0.8em; }
+    .pw-load-btn { font-size: 0.8em; padding: 5px 8px; }
+    .pw-refine-btn-text { letter-spacing: 0; font-size: 0.9em; }
 }

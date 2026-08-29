@@ -1,13 +1,11 @@
-
 {
-    "display_name": "Persona Weaver (User人设生成器)",
+    "display_name": "Persona Weaver (Trình tạo nhân vật User)",
     "name": "st-persona-weaver",
     "version": "3.4.6",
     "author": "Yellows & AI",
-    "description": "AI辅助生成与润色User/NPC设定",
+    "description": "Dùng AI để tạo và trau chuốt thiết lập User/NPC",
     "js": "index.js",
     "css": "style.css",
     "type": "extension",
-    "notes": "v3.4.6 更新：\n1.独立 API 与主 API 支持流式输出\n2.修复使用剧情推断时部分条目为空的情况\n3.修复纯润色时未涉及字段被清空或被替换为占位符的问题"
+    "notes": "Bản Việt hoá — toàn bộ giao diện, thông báo, prompt và mẫu YAML đã chuyển sang tiếng Việt.\n\nv3.4.6:\n1. API riêng và API chính đều hỗ trợ streaming\n2. Sửa lỗi một số mục bị rỗng khi suy luận từ cốt truyện\n3. Sửa lỗi khi chỉ trau chuốt mà các trường không liên quan bị xoá hoặc bị thay bằng placeholder"
 }
-

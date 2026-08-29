@@ -1,34 +1,54 @@
-# 🧙‍♂️ Persona Weaver (User人设生成器)
+# 🧙‍♂️ Persona Weaver (Trình tạo nhân vật User)
 
-[中文] | [English](#english)
+[Tiếng Việt] | [中文](#chinese) | [English](#english)
+
+Tiện ích mở rộng gốc cho SillyTavern. Dùng AI để tạo, trau chuốt và quản lý User Persona của bạn, kèm chế độ so sánh thông minh và đồng bộ World Info.
+
+> **Bản Việt hoá**: toàn bộ giao diện, nút bấm, thông báo, prompt gửi cho AI và mẫu YAML đã chuyển sang tiếng Việt. Khoá YAML dùng dấu gạch dưới (`Thông_tin_cơ_bản`, `Ngoại_hình`, …) vì bộ phân tích của tiện ích không chấp nhận khoá có dấu cách hay gạch ngang.
+
+## ✨ Tính năng chính
+
+*   **Sinh nội dung bằng AI**: từ một mô tả ngắn bằng ngôn ngữ tự nhiên (hoặc mẫu YAML có sẵn), tự động tạo ra hồ sơ nhân vật có cấu trúc, chi tiết.
+*   **Trau chuốt sâu & so sánh thông minh**:
+    *   Chưa vừa ý? Nhập góp ý, AI sẽ viết lại.
+    *   Chế độ **Diff** hiển thị trực quan phần thay đổi trước/sau, cho phép giữ lại từng đoạn hoặc sửa trực tiếp.
+*   **Hộp bản nháp**: tự động hoặc thủ công lưu kết quả vào bản ghi, không mất ý tưởng, nạp lại bằng một cú nhấp.
+*   **Liên kết World Info**: tự phát hiện World Info đang gắn với nhân vật, ghi thiết lập vào đó như một mục mới.
+*   **API riêng**: cấu hình một API độc lập (OpenAI, DeepSeek, …) để chạy nền, không đụng tới ngữ cảnh và cấu hình model của cuộc chat chính.
+*   **Hỗ trợ điện thoại**: giao diện tối ưu cho cảm ứng, vuốt và thao tác nổi.
+
+## 📦 Cài đặt
+
+1.  **Khuyến nghị trước**: cài và bật [TavernHelper (JS-Slash-Runner)](https://github.com/n0vi028/JS-Slash-Runner) để thao tác World Info đầy đủ nhất (không bắt buộc).
+2.  Mở trang **Extensions** của SillyTavern.
+3.  Nhấn **Install Extension**.
+4.  Dán địa chỉ kho: `https://github.com/sisisisilviaxie-star/st-persona-weaver`
+5.  Nhấn **Save** rồi tải lại trang.
+
+## 📖 Dùng nhanh
+
+1.  Sau khi cài, phía trên ô nhập liệu sẽ có **biểu tượng đũa phép** (<i class="fa-solid fa-wand-magic-sparkles"></i>), nhấn để mở bảng điều khiển.
+2.  **Tạo**: nhập yêu cầu ở tab Nhân vật rồi nhấn nút tạo.
+3.  **Trau chuốt**: bôi đen một đoạn trong kết quả rồi nhấn nút “Sửa đoạn này”, hoặc nhập góp ý ở ô bên dưới.
+4.  **Lưu**: nhấn “Lưu vào bản ghi” để cất vào bản nháp, hoặc “Ghi đè nhân vật hiện tại” để áp dụng ngay.
+
+> **Nâng cấp từ bản tiếng Trung**: prompt mặc định cũ và mẫu YAML mặc định cũ sẽ tự chuyển sang bản tiếng Việt khi mở lại. Prompt hoặc mẫu bạn đã tự sửa được giữ nguyên — muốn dùng bản tiếng Việt thì nhấn “Khôi phục mặc định”.
+
+---
+
+<a name="chinese"></a>
+## 中文
 
 SillyTavern 原生扩展插件。旨在利用 AI 智能生成、深度润色和管理您的 User Persona（用户人设），支持智能对比编辑与世界书自动联动。
 
-## ✨ 核心功能
+本仓库为越南语本地化版本：界面、提示词与 YAML 模版均已改为越南语。
 
 *   **AI 智能生成**：根据简单的自然语言描述（或内置 YAML 模版），自动生成结构化、高质量的用户人设。
-*   **深度润色 & 智能对比**：
-    *   对现有设定不满意？输入修改意见，AI 智能重写。
-    *   提供 **Diff (差异对比)** 视图，直观展示修改前后的变化，支持选择性保留或直接编辑。
-*   **草稿箱系统**：自动或手动保存生成记录到草稿箱，灵感永不丢失，随时一键回填。
-*   **世界书联动**：自动检测当前绑定的世界书，将设定作为条目一键写入，实现剧情深度绑定。
-*   **独立 API 支持**：支持配置独立的 API（如 OpenAI、DeepSeek 等）进行后台生成，不占用主对话的上下文和模型配置。
+*   **深度润色 & 智能对比**：提供 Diff（差异对比）视图，直观展示修改前后的变化。
+*   **草稿箱系统**：自动或手动保存生成记录到草稿箱。
+*   **世界书联动**：自动检测当前绑定的世界书，将设定作为条目一键写入。
+*   **独立 API 支持**：支持配置独立的 API（如 OpenAI、DeepSeek 等）进行后台生成。
 *   **移动端适配**：优化的 UI 设计，支持手机端触摸滑动与悬浮操作。
-
-## 📦 安装方法
-
-1.  **前置需求**：建议安装并启用 [TavernHelper (JS-Slash-Runner)](https://github.com/n0vi028/JS-Slash-Runner) 插件以获得最佳的世界书操作体验（非强制，但推荐）。
-2.  打开 SillyTavern 的 **Extensions (扩展)** 页面。
-3.  点击 **Install Extension**。
-4.  在 URL 栏输入本仓库地址：`[https://github.com/sisisisilviaxie-star/st-persona-weaver]`
-5.  点击 **Save** 并刷新页面。
-
-## 📖 使用简述
-
-1.  安装后，输入框上方会出现 **魔棒图标** (<i class="fa-solid fa-wand-magic-sparkles"></i>)，点击即可打开面板。
-2.  **生成**：在编辑页输入您的要求，点击生成。
-3.  **润色**：选中生成结果中的某段文字，点击浮现的“修改”按钮，或直接在下方输入意见进行润色。
-4.  **保存**：点击“保存”将结果存入草稿，或点击“覆盖当前人设”直接应用。
 
 ---
 
@@ -36,6 +56,8 @@ SillyTavern 原生扩展插件。旨在利用 AI 智能生成、深度润色和�
 ## English
 
 **Persona Weaver** is a native extension for SillyTavern that uses AI to help create, refine, and manage User Personas, with automatic World Info synchronization.
+
+This repository is the Vietnamese localization: the UI, prompts, and YAML templates are all in Vietnamese.
 
 ### ✨ Features
 

@@ -440,14 +440,14 @@
    Diff View & Raw Text Fix (Fixing the Black Box)
 ========================================= */
 
-/* 1. 强制覆盖整个对比容器的背景 */
+/* 1. Ep nen cua toan bo khung so sanh */
 .pw-diff-container,
 .pw-diff-content-area { 
     background-color: var(--cozy-bg) !important; 
     color: var(--cozy-text) !important;
 }
 
-/* 2. 顶部 Tab 栏 */
+/* 2. Thanh Tab tren cung */
 .pw-diff-tabs-bar { 
     background-color: var(--pw-paper-bg) !important; 
     border-bottom: 2px solid var(--cozy-border-color); 
@@ -468,7 +468,7 @@
     z-index: 2; 
 }
 
-/* 3. 对比行（智能对比页） */
+/* 3. Hang so sanh (trang so sanh thong minh) */
 .pw-diff-content-area .pw-diff-row,
 .pw-diff-row {
     background: #FFFFFF !important;  
@@ -480,15 +480,15 @@
     color: var(--cozy-text) !important;
 }
 
-/* 4. [关键修复] 原文显示区域 (修复黑色背景) */
-/* 针对 "新版原文/原版原文" 中的 pre/code 标签 */
+/* 4. [Sua quan trong] Vung hien van ban goc (sua nen den) */
+/* Nham vao the pre/code trong "ban moi/ban goc" */
 .pw-diff-container pre, 
 .pw-diff-content-area pre,
 .pw-diff-content-area code,
 .pw-diff-content-area div[style*="background-color"] {
-    background-color: #FFFFFF !important; /* 强制白底 */
+    background-color: #FFFFFF !important; /* ep nen trang */
     background: #FFFFFF !important;
-    color: var(--cozy-text) !important;   /* 强制深棕色字 */
+    color: var(--cozy-text) !important;   /* ep chu nau dam */
     border: 2px solid var(--cozy-beige) !important;
     border-radius: 12px;
     padding: 15px !important;
@@ -497,7 +497,7 @@
     box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05);
 }
 
-/* 5. 属性标题 */
+/* 5. Tieu de thuoc tinh */
 .pw-diff-attr-name {
     background: var(--pw-paper-bg) !important; 
     color: var(--cozy-text) !important;
@@ -507,7 +507,7 @@
     text-align: center;
 }
 
-/* 6. 卡片修复 */
+/* 6. Sua the */
 .pw-diff-cards, .pw-diff-card {
     background: #fff !important;
     color: var(--cozy-text) !important;
@@ -526,7 +526,7 @@
     color: var(--cozy-text) !important;
 }
 
-/* 7. 底部操作栏 */
+/* 7. Thanh thao tac duoi cung */
 .pw-diff-footer, 
 .pw-diff-container > div:last-child { 
     background-color: var(--cozy-bg) !important;
@@ -556,7 +556,7 @@
 }
 #pw-diff-confirm:active { transform: translateY(4px); box-shadow: none !important; }
 
-/* 兜底文字颜色 */
+/* Mau chu du phong */
 .pw-diff-content, .pw-diff-textarea, .pw-diff-container div {
     color: var(--cozy-text) !important;
 }
