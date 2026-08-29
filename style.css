@@ -1090,3 +1090,41 @@
     .pw-load-btn { font-size: 0.8em; padding: 5px 8px; }
     .pw-refine-btn-text { letter-spacing: 0; font-size: 0.9em; }
 }
+
+/* =========================================
+   Fandom Wiki fetch bar
+========================================= */
+.pw-wiki-bar {
+    display: none; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin-top: 6px; padding: 8px 10px;
+    background: rgba(88, 101, 242, 0.12);
+    border: 1px solid rgba(88, 101, 242, 0.35);
+    border-radius: 6px; font-size: 0.85em;
+    color: var(--pw-text-main);
+}
+.pw-wiki-icon { color: #7289da; flex-shrink: 0; }
+.pw-wiki-url {
+    flex: 1; min-width: 0; opacity: 0.85;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pw-wiki-btn { white-space: nowrap; flex-shrink: 0; }
+.pw-wiki-dismiss { background: transparent; opacity: 0.5; flex-shrink: 0; }
+.pw-wiki-dismiss:hover { opacity: 1; }
+
+.pw-wiki-status {
+    display: none; font-size: 0.8em; margin-top: 4px;
+    padding: 4px 8px; border-radius: 4px; line-height: 1.4;
+}
+.pw-wiki-status.ok {
+    color: #4caf50; background: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+.pw-wiki-status.err {
+    color: var(--pw-danger); background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+@media screen and (max-width: 600px) {
+    .pw-wiki-bar { font-size: 0.8em; padding: 6px 8px; gap: 6px; }
+    .pw-wiki-url { flex-basis: 100%; }
+}

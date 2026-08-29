@@ -14,6 +14,7 @@ Tiện ích mở rộng gốc cho SillyTavern. Dùng AI để tạo, trau chuố
     *   Chế độ **Diff** hiển thị trực quan phần thay đổi trước/sau, cho phép giữ lại từng đoạn hoặc sửa trực tiếp.
 *   **Hộp bản nháp**: tự động hoặc thủ công lưu kết quả vào bản ghi, không mất ý tưởng, nạp lại bằng một cú nhấp.
 *   **Liên kết World Info**: tự phát hiện World Info đang gắn với nhân vật, ghi thiết lập vào đó như một mục mới.
+*   **Lấy nội dung từ Fandom Wiki**: dán link `*.fandom.com/wiki/...` vào ô yêu cầu, tiện ích tự nhận ra và hiện nút tải. Nội dung trang được rút gọn thành văn bản thuần rồi đính kèm làm tham chiếu cho lần sinh kế tiếp.
 *   **API riêng**: cấu hình một API độc lập (OpenAI, DeepSeek, …) để chạy nền, không đụng tới ngữ cảnh và cấu hình model của cuộc chat chính.
 *   **Hỗ trợ điện thoại**: giao diện tối ưu cho cảm ứng, vuốt và thao tác nổi.
 
@@ -31,6 +32,17 @@ Tiện ích mở rộng gốc cho SillyTavern. Dùng AI để tạo, trau chuố
 2.  **Tạo**: nhập yêu cầu ở tab Nhân vật rồi nhấn nút tạo.
 3.  **Trau chuốt**: bôi đen một đoạn trong kết quả rồi nhấn nút “Sửa đoạn này”, hoặc nhập góp ý ở ô bên dưới.
 4.  **Lưu**: nhấn “Lưu vào bản ghi” để cất vào bản nháp, hoặc “Ghi đè nhân vật hiện tại” để áp dụng ngay.
+
+### Dùng Fandom Wiki làm tư liệu
+
+1.  Dán link trang Fandom vào ô yêu cầu, ví dụ `https://genshin-impact.fandom.com/vi/wiki/Furina`. Cả dạng có mã ngôn ngữ (`/vi/wiki/`) lẫn dạng không có đều nhận.
+2.  Thanh xanh hiện ra bên dưới ô nhập — nhấn **Tải nội dung Wiki**.
+3.  Link trong ô yêu cầu được thay bằng nhãn gọn `[Wiki: Tên trang]`; nội dung trang nằm sẵn trong bộ nhớ tạm.
+4.  Nhấn nút tạo. Nội dung wiki (tối đa 15.000 ký tự) được đính kèm làm khối tham chiếu.
+
+Bộ nhớ tạm **bị xoá sau mỗi lần sinh** để không âm thầm gắn lại tư liệu cũ vào các yêu cầu sau. Cần dùng lại thì tải lại — thanh sẽ tự hiện khi nhãn/link vẫn còn trong ô yêu cầu.
+
+Tính năng gọi thẳng MediaWiki API công khai của Fandom (`api.php?...&origin=*`) từ trình duyệt, không qua máy chủ trung gian và không gửi kèm dữ liệu nào của bác.
 
 > **Nâng cấp từ bản tiếng Trung**: prompt mặc định cũ và mẫu YAML mặc định cũ sẽ tự chuyển sang bản tiếng Việt khi mở lại. Prompt hoặc mẫu bạn đã tự sửa được giữ nguyên — muốn dùng bản tiếng Việt thì nhấn “Khôi phục mặc định”.
 

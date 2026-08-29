@@ -7,5 +7,5 @@
     "js": "index.js",
     "css": "style.css",
     "type": "extension",
-    "notes": "Bản Việt hoá — toàn bộ giao diện, thông báo, prompt và mẫu YAML đã chuyển sang tiếng Việt.\n\nv3.4.6:\n1. API riêng và API chính đều hỗ trợ streaming\n2. Sửa lỗi một số mục bị rỗng khi suy luận từ cốt truyện\n3. Sửa lỗi khi chỉ trau chuốt mà các trường không liên quan bị xoá hoặc bị thay bằng placeholder"
+    "notes": "Bản Việt hoá — toàn bộ giao diện, thông báo, prompt và mẫu YAML đã chuyển sang tiếng Việt.\n\nBổ sung: lấy nội dung Fandom Wiki làm tư liệu tham chiếu (dán link vào ô yêu cầu rồi nhấn Tải nội dung Wiki).\n\nv3.4.6:\n1. API riêng và API chính đều hỗ trợ streaming\n2. Sửa lỗi một số mục bị rỗng khi suy luận từ cốt truyện\n3. Sửa lỗi khi chỉ trau chuốt mà các trường không liên quan bị xoá hoặc bị thay bằng placeholder"
 }
