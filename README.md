@@ -4,7 +4,15 @@
 
 Tiện ích mở rộng gốc cho SillyTavern. Dùng AI để tạo, trau chuốt và quản lý User Persona của bạn, kèm chế độ so sánh thông minh và đồng bộ World Info.
 
-> **Bản Việt hoá**: toàn bộ giao diện, nút bấm, thông báo, prompt gửi cho AI và mẫu YAML đã chuyển sang tiếng Việt. Khoá YAML dùng dấu gạch dưới (`Thông_tin_cơ_bản`, `Ngoại_hình`, …) vì bộ phân tích của tiện ích không chấp nhận khoá có dấu cách hay gạch ngang.
+> **Bản Việt hoá**: toàn bộ giao diện, nút bấm, thông báo, prompt gửi cho AI và mẫu YAML đã chuyển sang tiếng Việt.
+
+### Về khoá trong mẫu YAML
+
+Khoá viết tự nhiên được: `Họ và tên:`, `Đặc điểm ngoại hình:`, `Hành trang & Tài sản:`, `Kỹ năng tối thượng (Ultimate Skill):` — dấu cách, gạch ngang, ngoặc, `/` và `&` đều hợp lệ. **Ký tự duy nhất bị cấm là dấu hai chấm**, vì đó là thứ ngăn cách khoá với giá trị.
+
+AI được yêu cầu chép khoá **y nguyên từng ký tự** theo mẫu đang dùng, không dịch, không đổi thứ tự, không đổi cách viết. Nếu kết quả trả về sai kiểu khoá so với mẫu, đó là lỗi — hãy báo.
+
+Hai mẫu mặc định kèm theo vẫn dùng gạch dưới (`Thông_tin_cơ_bản`) do lịch sử để lại; mẫu tự soạn không cần theo.
 
 ## ✨ Tính năng chính
 

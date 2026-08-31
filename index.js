@@ -147,11 +147,12 @@ const defaultTemplateGenPrompt =
 
 <requirements>
 1. Language: **Vietnamese (Tiếng Việt)** keys, written with full diacritics.
-   - Keys MUST NOT contain spaces or hyphens. Join words with underscores: "Thông_tin_cơ_bản", "Ngoại_hình", "Mục_tiêu_cuộc_đời".
+   - Write keys the natural way, with ordinary spaces: "Thông tin cơ bản", "Ngoại hình", "Mục tiêu cuộc đời".
+   - Keys MUST NOT contain a colon; that is the only forbidden character.
 2. Structure: YAML keys only. Leave values empty.
 3. **World Consistency**: The fields MUST reflect the specific logic of the provided World Setting.
-   - If the world is Xianxia/Tu tiên, include keys like "Căn_cốt", "Cảnh_giới", "Linh_căn".
-   - If the world is ABO, include "Giới_tính_thứ_hai", "Mùi_pheromone".
+   - If the world is Xianxia/Tu tiên, include keys like "Căn cốt", "Cảnh giới", "Linh căn".
+   - If the world is ABO, include "Giới tính thứ hai", "Mùi pheromone".
    - If the world is Modern, use standard sociological attributes.
 4. Scope: Biological, Sociological, Psychological, Special Abilities.
 5. Detail Level: High. This is for the main character.
@@ -177,12 +178,13 @@ const defaultNpcTemplateGenPrompt =
 
 <requirements>
 1. Language: **Vietnamese (Tiếng Việt)** keys, written with full diacritics.
-   - Keys MUST NOT contain spaces or hyphens. Join words with underscores: "Thông_tin_cơ_bản", "Đặc_điểm_ngoại_hình".
+   - Write keys the natural way, with ordinary spaces: "Thông tin cơ bản", "Đặc điểm ngoại hình".
+   - Keys MUST NOT contain a colon; that is the only forbidden character.
 2. Structure: YAML keys only. Leave values empty.
 3. **World Consistency**: The fields MUST reflect the specific logic of the provided World Setting.
-   - If the world is Xianxia/Tu tiên, include keys like "Căn_cốt", "Cảnh_giới", "Tông_môn".
-   - If the world is ABO, include "Giới_tính_thứ_hai", "Pheromone".
-   - If the world is Cyberpunk, include "Mức_độ_cấy_ghép_cơ_thể", "Công_ty_trực_thuộc".
+   - If the world is Xianxia/Tu tiên, include keys like "Căn cốt", "Cảnh giới", "Tông môn".
+   - If the world is ABO, include "Giới tính thứ hai", "Pheromone".
+   - If the world is Cyberpunk, include "Mức độ cấy ghép cơ thể", "Công ty trực thuộc".
 4. Scope: Functional (Role/Faction), Visual (Appearance), Relational (Connection to MC).
 5. Detail Level: Moderate. Focus on identifiable traits and narrative function.
 6. If user has provided specific requirements, prioritize fulfilling them.
@@ -219,7 +221,7 @@ const defaultPersonaGenPrompt =
 
 [Requirements]:
 1. Follow the YAML schema exactly. Output every leaf field defined in the schema.
-1b. OUTPUT LANGUAGE — Write ALL values in **Vietnamese (Tiếng Việt)** with full diacritics. Keep the schema's keys byte-identical to the target schema; do NOT translate, reorder, or rename them. Proper nouns may keep their original spelling.
+1b. OUTPUT LANGUAGE — Write ALL values in **Vietnamese (Tiếng Việt)** with full diacritics. Keep the schema's keys byte-identical to the target schema; do NOT translate, reorder, rename, or re-spell them. Copy every key character for character, including its spaces, punctuation, parentheses and capitalisation. In particular, NEVER replace a space inside a key with an underscore. Proper nouns may keep their original spelling.
 2. MANDATORY COMPLETENESS — NEVER leave any field blank. You MUST fill EVERY leaf field with a concrete, non-empty value. Do NOT output empty strings, null, "-", or lazy placeholders such as a bare "không rõ", "unknown", "N/A", "chưa xác định", "TBD", "chưa có". If a field cannot be directly determined from source materials or the user's request, generate the most reasonable value consistent with the persona, context, and worldview — but do NOT contradict existing evidence.
 3. LIFECYCLE / TIMELINE EXCEPTION — A leaf field MAY contain a narrative-meaningful placeholder ONLY when its content corresponds to a life stage, age bracket, or canonical event the character has NOT YET reached or experienced (e.g. a 24-year-old's "Thời_trung_niên_35_đến_nay" / old-age stage; an unborn descendant; a future plot beat that has not happened in the established narrative). In such cases, write a clear, contextual placeholder in Vietnamese that EXPLICITLY states the reason, such as 「Chưa xảy ra (nhân vật mới X tuổi, chưa tới giai đoạn này)」, 「Chưa tới giai đoạn này」, or 「Cốt truyện chưa đề cập」. This applies generically to ANY template's time-locked / future-locked fields, including custom user templates. The reason MUST be contextual — a bare "không rõ" / "N/A" / "TBD" without explanation is still forbidden.
 4. REFINE / PATCH MODE — If a Target Buffer (existing profile) is provided in the input, treat it as the baseline. PRESERVE every field not explicitly affected by the user's patch instruction. Do NOT clear, blank, shorten, or replace untouched fields with placeholders. Only modify the fields targeted by the patch (and any directly implied by it). Any field that was previously blank MUST now be filled (subject to rules 2 and 3).
@@ -250,7 +252,7 @@ const defaultNpcGenPrompt =
 2. Relationship with {{user}} and {{char}} should be defined clearly.
 3. Follow the YAML schema provided. If generating a single NPC, be detailed. If generating multiple, focus on distinguishing traits for each.
 4. If generating multiple NPCs, separate each with a line containing ONLY "---".
-4b. OUTPUT LANGUAGE — Write ALL values in **Vietnamese (Tiếng Việt)** with full diacritics. Keep the schema's keys byte-identical to the target schema; do NOT translate, reorder, or rename them. Proper nouns may keep their original spelling.
+4b. OUTPUT LANGUAGE — Write ALL values in **Vietnamese (Tiếng Việt)** with full diacritics. Keep the schema's keys byte-identical to the target schema; do NOT translate, reorder, rename, or re-spell them. Copy every key character for character, including its spaces, punctuation, parentheses and capitalisation. In particular, NEVER replace a space inside a key with an underscore. Proper nouns may keep their original spelling.
 5. MANDATORY COMPLETENESS — NEVER leave any field blank. You MUST fill EVERY leaf field in the target schema for each NPC with a concrete, non-empty value. Do NOT output empty strings, null, "-", or lazy placeholders such as a bare "không rõ", "unknown", "N/A", "chưa xác định", "TBD", "chưa có". When direct evidence is missing, generate the most reasonable value consistent with the NPC's role, the story context, and the worldview — without contradicting existing evidence.
 6. LIFECYCLE / TIMELINE EXCEPTION — A leaf field MAY contain a narrative-meaningful placeholder ONLY when its content corresponds to a life stage, age bracket, or canonical event the NPC has NOT YET reached or experienced (e.g. a young NPC's middle-age / old-age stage; an unborn child; a future plot beat that has not happened in the established narrative). In such cases, write a clear, contextual placeholder in Vietnamese that EXPLICITLY states the reason, such as 「Chưa xảy ra (NPC mới X tuổi, chưa tới giai đoạn này)」, 「Chưa tới giai đoạn này」, or 「Cốt truyện chưa đề cập」. This applies generically to ANY template's time-locked / future-locked fields, including custom user templates. A bare "không rõ" / "N/A" / "TBD" without a contextual reason is still forbidden.
 7. REFINE / PATCH MODE — If a Target Buffer (existing NPC profile or multi-NPC document) is provided in the input, treat it as the baseline. PRESERVE every field of every NPC that is not explicitly affected by the user's patch instruction. Do NOT clear, blank, shorten, or replace untouched fields with placeholders. Only modify the fields (or NPCs) targeted by the patch. Any field that was previously blank MUST now be filled (subject to rules 5 and 6).
@@ -288,7 +290,7 @@ const defaultChatInferPrompt =
    (a) Direct evidence from the chat history and source materials.
    (b) Attached avatar / reference images (for appearance-related fields).
    (c) Reasonable, context-consistent inference derived from tone, worldview, relationships, and common sense.
-3b. OUTPUT LANGUAGE — Write ALL values in **Vietnamese (Tiếng Việt)** with full diacritics, even when the chat history is in another language. Keep the schema's keys byte-identical to the target schema; do NOT translate, reorder, or rename them. Proper nouns may keep their original spelling.
+3b. OUTPUT LANGUAGE — Write ALL values in **Vietnamese (Tiếng Việt)** with full diacritics, even when the chat history is in another language. Keep the schema's keys byte-identical to the target schema; do NOT translate, reorder, rename, or re-spell them. Copy every key character for character, including its spaces, punctuation, parentheses and capitalisation. In particular, NEVER replace a space inside a key with an underscore. Proper nouns may keep their original spelling.
 4. MANDATORY COMPLETENESS — NEVER leave any field blank. You MUST fill EVERY leaf field in the target schema with a concrete, non-empty value. Do NOT output empty strings, null, "-", or lazy placeholders such as a bare "không rõ", "unknown", "N/A", "chưa xác định", "TBD", "chưa có". If a field cannot be directly determined from chat/images, generate the most reasonable value consistent with the observed personality, context, and worldview — but do NOT contradict existing evidence.
 5. LIFECYCLE / TIMELINE EXCEPTION — A leaf field MAY contain a narrative-meaningful placeholder ONLY when its content corresponds to a life stage, age bracket, or canonical event the user character has NOT YET reached or experienced in the chat history / source materials (e.g. a 24-year-old's "Thời_trung_niên_35_đến_nay" / old-age stage; an unborn descendant; an event scheduled for later in the story). In such cases, write a clear, contextual placeholder in Vietnamese that EXPLICITLY states the reason, such as 「Chưa xảy ra (nhân vật mới X tuổi, chưa tới giai đoạn này)」, 「Chưa tới giai đoạn này」, or 「Cốt truyện chưa đề cập」. This applies generically to ANY template's time-locked / future-locked fields, including custom user templates. A bare "không rõ" / "N/A" / "TBD" without a contextual reason is still forbidden.
 6. If an existing profile is provided above, PRESERVE content still consistent with the chat, ADD newly revealed traits, UPDATE evolved traits, and ENRICH with observed patterns. Any field that was previously blank MUST now be filled (subject to rules 4 and 5).
@@ -331,7 +333,7 @@ const defaultNpcChatInferPrompt =
    (a) Direct evidence from the chat history and story context.
    (b) Attached reference images (for appearance-related fields of the matching NPC).
    (c) Reasonable, context-consistent inference derived from the worldview, the NPC's role, tone, and interactions.
-4b. OUTPUT LANGUAGE — Write ALL values in **Vietnamese (Tiếng Việt)** with full diacritics, even when the chat history is in another language. Keep the schema's keys byte-identical to the target schema; do NOT translate, reorder, or rename them. Proper nouns may keep their original spelling.
+4b. OUTPUT LANGUAGE — Write ALL values in **Vietnamese (Tiếng Việt)** with full diacritics, even when the chat history is in another language. Keep the schema's keys byte-identical to the target schema; do NOT translate, reorder, rename, or re-spell them. Copy every key character for character, including its spaces, punctuation, parentheses and capitalisation. In particular, NEVER replace a space inside a key with an underscore. Proper nouns may keep their original spelling.
 5. MANDATORY COMPLETENESS — NEVER leave any field blank. You MUST fill EVERY leaf field in the target schema for each NPC with a concrete, non-empty value. Do NOT output empty strings, null, "-", or lazy placeholders such as a bare "không rõ", "unknown", "N/A", "chưa xác định", "TBD", "chưa có". When direct evidence is missing, generate the most reasonable value consistent with the NPC's observed behavior, role, and the story's worldview — without contradicting existing evidence.
 6. LIFECYCLE / TIMELINE EXCEPTION — A leaf field MAY contain a narrative-meaningful placeholder ONLY when its content corresponds to a life stage, age bracket, or canonical event the NPC has NOT YET reached or experienced in the chat history / story context (e.g. a young NPC's middle-age / old-age stage; an unborn child; a future plot beat that has not happened in the established narrative). In such cases, write a clear, contextual placeholder in Vietnamese that EXPLICITLY states the reason, such as 「Chưa xảy ra (NPC mới X tuổi, chưa tới giai đoạn này)」, 「Chưa tới giai đoạn này」, or 「Cốt truyện chưa đề cập」. This applies generically to ANY template's time-locked / future-locked fields, including custom user templates. A bare "không rõ" / "N/A" / "TBD" without a contextual reason is still forbidden.
 7. When reference images are attached, you MUST use them to fully populate appearance-related fields of the corresponding NPC(s). Appearance fields must never remain blank when an image is provided.
@@ -662,7 +664,11 @@ function parseYamlToBlocks(text) {
     try {
         const cleanText = text.replace(/^```[a-z]*\n?/im, '').replace(/```$/im, '').trim();
         let lines = cleanText.split('\n');
-        const topLevelKeyRegex = /^\s*([^:\s\-]+?)\s*[:：]/;
+        // Khoá được phép chứa dấu cách, gạch ngang, ngoặc, "/" và "&" — chỉ cấm dấu hai chấm
+        // (thứ phân tách khoá với giá trị). Bản cũ cấm luôn dấu cách nên mọi mẫu viết tự nhiên
+        // như "Họ và tên:" bị bỏ qua sạch, và đó là lý do trước đây phải nối từ bằng gạch dưới.
+        // Dòng bắt đầu bằng "-" đã bị loại riêng ở các chỗ gọi bên dưới.
+        const topLevelKeyRegex = /^\s*([^:\n]+?)\s*[:：]/;
         let topKeysIndices = [];
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
@@ -728,6 +734,14 @@ function findMatchingKey(targetKey, map) {
         if (key.toLowerCase() === targetKey.toLowerCase()) return key;
     }
     return null;
+}
+
+// Mồi câu trả lời bằng đúng khoá đầu tiên của schema đang dùng.
+// Mồi bằng một khoá cứng sẽ dạy model kiểu đặt tên khác với mẫu — đó là lý do
+// mẫu viết bằng dấu cách vẫn nhận về kết quả nối bằng gạch dưới.
+function buildYamlPrefill(template) {
+    const firstKey = [...parseYamlToBlocks(template).keys()][0];
+    return firstKey ? "```yaml\n" + firstKey + ":" : "```yaml\n";
 }
 
 async function collectContextData() {
@@ -1012,7 +1026,7 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
     }
 
     let userMessageContent = "";
-    let prefillContent = "```yaml\nThông_tin_cơ_bản:";
+    let prefillContent = buildYamlPrefill(getCurrentTemplate());
 
     if (isTemplateMode) {
         const isRefine = data.mode === 'refine';
@@ -1348,7 +1362,16 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
     } else {
         if (prefillContent && !responseContent.startsWith(prefillContent) && !responseContent.startsWith("```yaml")) {
             const trimRes = responseContent.trim();
-            if (!trimRes.startsWith("```yaml") && (trimRes.startsWith("Tên") || trimRes.startsWith("  Tên") || trimRes.startsWith("Thông_tin_cơ_bản") || trimRes.startsWith("姓名") || trimRes.startsWith("  姓名") || trimRes.startsWith("基本信息"))) {
+            // Model đã nuốt mất khoá được mồi và trả thẳng phần con: ghép lại phần mồi.
+            // So theo khoá đầu của schema đang dùng thay vì một danh sách khoá cứng,
+            // để mẫu tự đặt tên nào cũng nhận ra được.
+            const prefillKey = prefillContent.replace(/^```yaml\n/, '').replace(/:$/, '').trim();
+            const resumesSchema = prefillKey && (
+                trimRes.startsWith(prefillKey) ||
+                responseContent.startsWith('  ') ||
+                responseContent.startsWith('\n')
+            );
+            if (!trimRes.startsWith("```yaml") && resumesSchema) {
                  responseContent = prefillContent + responseContent;
             }
         }
