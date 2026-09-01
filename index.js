@@ -461,7 +461,7 @@ function stripWikitext(text) {
 }
 
 const WIKI_MAX_SUBPAGES = 12;   // trần số mục con lấy về
-const WIKI_CHAR_BUDGET = 15000; // tổng ký tự đính vào prompt, khớp với mức cắt lúc chèn
+const WIKI_CHAR_BUDGET = 55000; // tổng ký tự đính vào prompt, khớp với mức cắt lúc chèn
 
 // Trang ảnh hầu như chỉ có chú thích và tên tệp, không mang tư liệu về nhân vật,
 // nên bỏ hẳn thay vì để nó ăn ngân sách ký tự.
