@@ -460,6 +460,68 @@ function stripWikitext(text) {
         .trim();
 }
 
+const WIKI_MAX_SUBPAGES = 12;   // trần số mục con lấy về
+const WIKI_CHAR_BUDGET = 15000; // tổng ký tự đính vào prompt, khớp với mức cắt lúc chèn
+
+// Trang ảnh hầu như chỉ có chú thích và tên tệp, không mang tư liệu về nhân vật,
+// nên bỏ hẳn thay vì để nó ăn ngân sách ký tự.
+const WIKI_SKIPPED_SUBPAGE_NAMES = ['gallery', 'image gallery', 'images', 'thư viện', 'thư viện ảnh'];
+
+function isSkippedSubpage(title) {
+    return String(title).split('/').slice(1)
+        .some(seg => WIKI_SKIPPED_SUBPAGE_NAMES.includes(seg.trim().toLowerCase()));
+}
+
+// Chia ngân sách ký tự cho các phần: chia đều, phần thừa của mục ngắn được rót lại
+// cho mục dài. Nhờ vậy một mục con khổng lồ không nuốt hết chỗ của trang chính,
+// mà ngân sách cũng không bị bỏ phí khi phần lớn mục đều ngắn.
+function allocateWikiBudget(lengths, budget) {
+    const alloc = new Array(lengths.length).fill(0);
+    let remaining = Math.max(0, budget);
+    let active = lengths.map((_, i) => i).filter(i => lengths[i] > 0);
+
+    while (active.length > 0 && remaining > 0) {
+        const share = Math.floor(remaining / active.length);
+        if (share <= 0) break;
+        let used = 0;
+        const next = [];
+        for (const i of active) {
+            const give = Math.min(share, lengths[i] - alloc[i]);
+            alloc[i] += give;
+            used += give;
+            if (alloc[i] < lengths[i]) next.push(i);
+        }
+        if (used === 0) break;
+        remaining -= used;
+        active = next;
+    }
+    return alloc;
+}
+
+// Liệt kê và tải các trang con "Tiêu đề/..." trong một lần gọi API.
+// Nhiều wiki nhân vật tách Abilities & gear, Relationships, Chronology... ra trang riêng,
+// nên chỉ lấy trang gốc là mất phần lớn tư liệu.
+async function fetchFandomSubpages(subdomain, title) {
+    const apiUrl = `https://${subdomain}.fandom.com/api.php?action=query&generator=allpages` +
+        `&gapprefix=${encodeURIComponent(title + '/')}&gapnamespace=0&gaplimit=${WIKI_MAX_SUBPAGES}` +
+        `&prop=revisions&rvslots=main&rvprop=content&format=json&origin=*`;
+
+    const res = await fetch(apiUrl);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const pages = data?.query?.pages;
+    if (!pages) return [];
+
+    return Object.values(pages)
+        .filter(p => !isSkippedSubpage(p.title))
+        .map(p => ({
+            title: p.title,
+            text: stripWikitext(p.revisions?.[0]?.slots?.main?.['*'] || p.revisions?.[0]?.['*'] || '')
+        }))
+        .filter(s => s.text.length > 0)
+        .sort((a, b) => a.title.localeCompare(b.title));
+}
+
 // Lấy nội dung một trang Fandom qua MediaWiki API (origin=* nên gọi được từ trình duyệt).
 async function fetchFandomWikiContent(wikiUrl) {
     // Nhận hai dạng:
@@ -483,13 +545,42 @@ async function fetchFandomWikiContent(wikiUrl) {
     if (page.missing !== undefined) throw new Error(`Trang "${rawTitle}" không tồn tại trên wiki này`);
 
     const wikitext = page.revisions?.[0]?.slots?.main?.['*'] || page.revisions?.[0]?.['*'] || '';
-    const plainText = stripWikitext(wikitext);
+    const mainText = stripWikitext(wikitext);
+
+    // Mục con là phần thêm: hỏng thì vẫn trả về trang chính chứ không làm hỏng cả lượt tải.
+    let subpages = [];
+    try {
+        subpages = await fetchFandomSubpages(subdomain, page.title);
+    } catch (e) {
+        console.warn("[PW] Không lấy được mục con của wiki:", e);
+    }
+
+    // Bỏ mục con đã được nhúng sẵn trong trang chính, tránh đếm hai lần.
+    subpages = subpages.filter(s => !mainText.includes(s.text.slice(0, 200)));
+
+    const sections = [{ title: page.title, text: mainText }, ...subpages];
+    const alloc = allocateWikiBudget(sections.map(s => s.text.length), WIKI_CHAR_BUDGET);
+    const kept = sections
+        .map((s, i) => ({ title: s.title, text: s.text, limit: alloc[i] }))
+        .filter(s => s.limit > 0);
+
+    const plainText = kept
+        .map(s => {
+            const body = s.text.length > s.limit
+                ? s.text.slice(0, s.limit).trimEnd() + "\n…(đã cắt bớt)"
+                : s.text;
+            return `### ${s.title}\n${body}`;
+        })
+        .join('\n\n');
 
     return {
         title: page.title,
         subdomain,
         plainText,
-        charCount: plainText.length
+        charCount: plainText.length,
+        sectionTitles: kept.map(s => s.title),
+        subpageCount: kept.length - 1,
+        skippedCount: sections.length - kept.length
     };
 }
 
@@ -1095,11 +1186,12 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
             .replace(/{{chatHistory}}/g, wrappedChatHistory);
     }
 
-    // Nội dung wiki đã tải được đính kèm như một khối tham chiếu, cắt ở 15000 ký tự
-    // để không nuốt hết ngân sách ngữ cảnh. Cache bị xoá sau khi sinh xong (xem #pw-btn-gen).
+    // Nội dung wiki đã tải được đính kèm như một khối tham chiếu. Phần cắt thật đã làm
+    // lúc tải (allocateWikiBudget chia đều cho trang chính và các mục con); chỗ này chỉ
+    // là chốt chặn. Cache bị xoá sau khi sinh xong (xem #pw-btn-gen).
     if (wikiDataCache && wikiDataCache.plainText) {
         const wikiRef = wrapAsXiTaReference(
-            wikiDataCache.plainText.substring(0, 15000),
+            wikiDataCache.plainText.substring(0, WIKI_CHAR_BUDGET),
             `Wiki Reference: ${wikiDataCache.title} (${wikiDataCache.subdomain}.fandom.com)`
         );
         userMessageContent = userMessageContent + '\n\n' + wikiRef;
@@ -4415,9 +4507,15 @@ function bindEvents() {
             if (!result) throw new Error("URL Fandom không hợp lệ");
             wikiDataCache = result;
 
+            const subInfo = result.subpageCount > 0
+                ? ` + ${result.subpageCount} mục con (${result.sectionTitles.slice(1).map(t => t.split('/').pop()).join(', ')})`
+                : '';
+            const skipInfo = result.skippedCount > 0
+                ? ` — bỏ ${result.skippedCount} mục do vượt ngân sách ${WIKI_CHAR_BUDGET.toLocaleString()} ký tự`
+                : '';
             $status
                 .removeClass('err').addClass('ok')
-                .text(`Đã tải: "${result.title}" (${result.charCount.toLocaleString()} ký tự) — nội dung sẽ được dùng làm tham chiếu khi sinh`)
+                .text(`Đã tải: "${result.title}"${subInfo} — ${result.charCount.toLocaleString()} ký tự, sẽ dùng làm tham chiếu khi sinh${skipInfo}`)
                 .show();
 
             // Thay URL trong ô yêu cầu bằng một nhãn tham chiếu gọn

@@ -22,7 +22,7 @@ Hai mẫu mặc định kèm theo vẫn dùng gạch dưới (`Thông_tin_cơ_b�
     *   Chế độ **Diff** hiển thị trực quan phần thay đổi trước/sau, cho phép giữ lại từng đoạn hoặc sửa trực tiếp.
 *   **Hộp bản nháp**: tự động hoặc thủ công lưu kết quả vào bản ghi, không mất ý tưởng, nạp lại bằng một cú nhấp.
 *   **Liên kết World Info**: tự phát hiện World Info đang gắn với nhân vật, ghi thiết lập vào đó như một mục mới.
-*   **Lấy nội dung từ Fandom Wiki**: dán link `*.fandom.com/wiki/...` vào ô yêu cầu, tiện ích tự nhận ra và hiện nút tải. Nội dung trang được rút gọn thành văn bản thuần rồi đính kèm làm tham chiếu cho lần sinh kế tiếp.
+*   **Lấy nội dung từ Fandom Wiki**: dán link `*.fandom.com/wiki/...` vào ô yêu cầu, tiện ích tự nhận ra và hiện nút tải. Trang chính **và các mục con** (`/Abilities & gear`, `/Relationships`, `/Chronology`, …) được rút gọn thành văn bản thuần rồi đính kèm làm tham chiếu cho lần sinh kế tiếp.
 *   **API riêng**: cấu hình một API độc lập (OpenAI, DeepSeek, …) để chạy nền, không đụng tới ngữ cảnh và cấu hình model của cuộc chat chính.
 *   **Hỗ trợ điện thoại**: giao diện tối ưu cho cảm ứng, vuốt và thao tác nổi.
 
@@ -45,8 +45,14 @@ Hai mẫu mặc định kèm theo vẫn dùng gạch dưới (`Thông_tin_cơ_b�
 
 1.  Dán link trang Fandom vào ô yêu cầu, ví dụ `https://genshin-impact.fandom.com/vi/wiki/Furina`. Cả dạng có mã ngôn ngữ (`/vi/wiki/`) lẫn dạng không có đều nhận.
 2.  Thanh xanh hiện ra bên dưới ô nhập — nhấn **Tải nội dung Wiki**.
-3.  Link trong ô yêu cầu được thay bằng nhãn gọn `[Wiki: Tên trang]`; nội dung trang nằm sẵn trong bộ nhớ tạm.
+3.  Link trong ô yêu cầu được thay bằng nhãn gọn `[Wiki: Tên trang]`; nội dung nằm sẵn trong bộ nhớ tạm. Dòng trạng thái cho biết đã gộp mấy mục con và tên của chúng.
 4.  Nhấn nút tạo. Nội dung wiki (tối đa 15.000 ký tự) được đính kèm làm khối tham chiếu.
+
+**Mục con.** Nhiều wiki nhân vật tách tư liệu ra trang riêng — `Carrera` có thêm `Carrera/Abilities & gear`, `Carrera/Chronology`, `Carrera/Relationships`. Tiện ích tự liệt kê và tải tối đa 12 mục con trong **một** lần gọi API, đánh dấu từng phần bằng `### Tên trang`.
+
+Hai loại mục con bị bỏ: trang ảnh (`/Gallery`, `/Image Gallery`, `/Images`, `/Thư viện`) vì hầu như chỉ có chú thích và tên tệp, và mục con đã được nhúng sẵn trong trang chính vì sẽ bị đếm hai lần. Chỉ khớp khi **cả đoạn tên** trùng — `/Gallery of Heroes` vẫn được giữ.
+
+Nếu tổng vượt 15.000 ký tự, ngân sách được chia đều rồi rót phần thừa của mục ngắn sang mục dài — một mục con khổng lồ không thể chiếm hết chỗ của trang chính, và phần bị cắt có đánh dấu `…(đã cắt bớt)`. Lấy mục con thất bại thì trang chính vẫn dùng được bình thường.
 
 Bộ nhớ tạm **bị xoá sau mỗi lần sinh** để không âm thầm gắn lại tư liệu cũ vào các yêu cầu sau. Cần dùng lại thì tải lại — thanh sẽ tự hiện khi nhãn/link vẫn còn trong ô yêu cầu.
 
