@@ -25,115 +25,115 @@ const HISTORY_PER_PAGE = 20;
 
 // 1. Mẫu User mặc định (mẫu chính)
 const defaultYamlTemplate =
-`Thông_tin_cơ_bản:
+`Thông tin cơ bản:
   Tên: {{user}}
   Tuổi:
-  Giới_tính:
-  Chiều_cao:
-  Thân_phận:
+  Giới tính:
+  Chiều cao:
+  Thân phận:
 
-Câu_chuyện_nền:
-  Thời_thơ_ấu_0_12_tuổi:
-  Thời_thiếu_niên_13_18_tuổi:
-  Thời_thanh_niên_19_35_tuổi:
-  Thời_trung_niên_35_đến_nay:
-  Hiện_trạng:
+Câu chuyện nền:
+  Thời thơ ấu (0-12 tuổi):
+  Thời thiếu niên (13-18 tuổi):
+  Thời thanh niên (19-35 tuổi):
+  Thời trung niên (35 đến nay):
+  Hiện trạng:
 
-Hoàn_cảnh_gia_đình:
+Hoàn cảnh gia đình:
   Cha:
   Mẹ:
-  Thành_viên_khác:
+  Thành viên khác:
 
-Quan_hệ_xã_hội:
+Quan hệ xã hội:
 
-Địa_vị_xã_hội:
+Địa vị xã hội:
 
-Ngoại_hình:
-  Kiểu_tóc:
-  Đôi_mắt:
-  Màu_da:
-  Dáng_mặt:
-  Vóc_dáng:
+Ngoại hình:
+  Kiểu tóc:
+  Đôi mắt:
+  Màu da:
+  Dáng mặt:
+  Vóc dáng:
 
-Phong_cách_ăn_mặc:
-  Trang_phục_công_sở:
-  Công_sở_thường_ngày:
-  Trang_phục_thường_ngày:
-  Đồ_mặc_ở_nhà:
+Phong cách ăn mặc:
+  Trang phục công sở:
+  Công sở thường ngày:
+  Trang phục thường ngày:
+  Đồ mặc ở nhà:
 
-Tính_cách:
-  Đặc_điểm_cốt_lõi:
-  Đặc_điểm_trong_tình_yêu:
+Tính cách:
+  Đặc điểm cốt lõi:
+  Đặc điểm trong tình yêu:
 
-Thói_quen_sinh_hoạt:
+Thói quen sinh hoạt:
 
-Tác_phong_làm_việc:
+Tác phong làm việc:
 
-Biểu_hiện_cảm_xúc:
-  Khi_tức_giận:
-  Khi_vui_vẻ:
+Biểu hiện cảm xúc:
+  Khi tức giận:
+  Khi vui vẻ:
 
-Mục_tiêu_cuộc_đời:
+Mục tiêu cuộc đời:
 
-Khuyết_điểm_và_điểm_yếu:
+Khuyết điểm và điểm yếu:
 
-Sở_thích_và_điều_ghét:
+Sở thích và điều ghét:
   Thích:
   Ghét:
 
-Năng_lực_và_kỹ_năng:
-  Liên_quan_công_việc:
-  Liên_quan_đời_sống:
-  Sở_trường_và_đam_mê:
+Năng lực và kỹ năng:
+  Liên quan công việc:
+  Liên quan đời sống:
+  Sở trường và đam mê:
 
 NSFW:
-  Đặc_điểm_liên_quan_tình_dục:
-    Kinh_nghiệm_tình_dục:
-    Xu_hướng_tính_dục:
-    Vai_trò_khi_quan_hệ:
-    Thói_quen_tình_dục:
-  Sở_thích_tình_dục:
-  Giới_hạn_cấm_kỵ:`;
+  Đặc điểm liên quan tình dục:
+    Kinh nghiệm tình dục:
+    Xu hướng tính dục:
+    Vai trò khi quan hệ:
+    Thói quen tình dục:
+  Sở thích tình dục:
+  Giới hạn cấm kỵ:`;
 
 // 1.1 Mẫu NPC
 const defaultNpcTemplate =
-`Thông_tin_cơ_bản:
+`Thông tin cơ bản:
   Tên:
   Tuổi:
-  Giới_tính:
-  Chiều_cao:
-  Thân_phận:
+  Giới tính:
+  Chiều cao:
+  Thân phận:
 
-Hoàn_cảnh_gia_đình:
-  Xuất_thân:
-  Thành_viên:
+Hoàn cảnh gia đình:
+  Xuất thân:
+  Thành viên:
 
-Đặc_điểm_ngoại_hình:
-  Kiểu_tóc:
-  Đôi_mắt:
-  Vóc_dáng:
-  Phong_cách_ăn_mặc:
+Đặc điểm ngoại hình:
+  Kiểu tóc:
+  Đôi mắt:
+  Vóc dáng:
+  Phong cách ăn mặc:
 
-Đặc_điểm_tính_cách:
-  Tính_cách_cốt_lõi:
-  Phong_cách_nói_chuyện:
-  Kiểu_hành_vi:
+Đặc điểm tính cách:
+  Tính cách cốt lõi:
+  Phong cách nói chuyện:
+  Kiểu hành vi:
 
-Câu_chuyện_nền:
-  Trải_nghiệm_quá_khứ:
-  Mục_tiêu_hiện_tại:
+Câu chuyện nền:
+  Trải nghiệm quá khứ:
+  Mục tiêu hiện tại:
 
-Quan_hệ_giao_tiếp:
-  Quan_hệ_với_nhân_vật_chính:
-  Quan_hệ_với_nhân_vật_khác:
+Quan hệ giao tiếp:
+  Quan hệ với nhân vật chính:
+  Quan hệ với nhân vật khác:
 
-Sở_thích_và_điều_ghét:
+Sở thích và điều ghét:
   Thích:
   Ghét:
 
 NSFW:
-  Đặc_điểm_liên_quan_tình_dục:
-  Sở_thích_tình_dục:`;
+  Đặc điểm liên quan tình dục:
+  Sở thích tình dục:`;
 
 // 2. Prompt chuyên dùng để tạo mẫu User
 const defaultTemplateGenPrompt = 
@@ -223,7 +223,7 @@ const defaultPersonaGenPrompt =
 1. Follow the YAML schema exactly. Output every leaf field defined in the schema.
 1b. OUTPUT LANGUAGE — Write ALL values in **Vietnamese (Tiếng Việt)** with full diacritics. Keep the schema's keys byte-identical to the target schema; do NOT translate, reorder, rename, or re-spell them. Copy every key character for character, including its spaces, punctuation, parentheses and capitalisation. In particular, NEVER replace a space inside a key with an underscore. Proper nouns may keep their original spelling.
 2. MANDATORY COMPLETENESS — NEVER leave any field blank. You MUST fill EVERY leaf field with a concrete, non-empty value. Do NOT output empty strings, null, "-", or lazy placeholders such as a bare "không rõ", "unknown", "N/A", "chưa xác định", "TBD", "chưa có". If a field cannot be directly determined from source materials or the user's request, generate the most reasonable value consistent with the persona, context, and worldview — but do NOT contradict existing evidence.
-3. LIFECYCLE / TIMELINE EXCEPTION — A leaf field MAY contain a narrative-meaningful placeholder ONLY when its content corresponds to a life stage, age bracket, or canonical event the character has NOT YET reached or experienced (e.g. a 24-year-old's "Thời_trung_niên_35_đến_nay" / old-age stage; an unborn descendant; a future plot beat that has not happened in the established narrative). In such cases, write a clear, contextual placeholder in Vietnamese that EXPLICITLY states the reason, such as 「Chưa xảy ra (nhân vật mới X tuổi, chưa tới giai đoạn này)」, 「Chưa tới giai đoạn này」, or 「Cốt truyện chưa đề cập」. This applies generically to ANY template's time-locked / future-locked fields, including custom user templates. The reason MUST be contextual — a bare "không rõ" / "N/A" / "TBD" without explanation is still forbidden.
+3. LIFECYCLE / TIMELINE EXCEPTION — A leaf field MAY contain a narrative-meaningful placeholder ONLY when its content corresponds to a life stage, age bracket, or canonical event the character has NOT YET reached or experienced (e.g. a 24-year-old's "Thời trung niên (35 đến nay)" / old-age stage; an unborn descendant; a future plot beat that has not happened in the established narrative). In such cases, write a clear, contextual placeholder in Vietnamese that EXPLICITLY states the reason, such as 「Chưa xảy ra (nhân vật mới X tuổi, chưa tới giai đoạn này)」, 「Chưa tới giai đoạn này」, or 「Cốt truyện chưa đề cập」. This applies generically to ANY template's time-locked / future-locked fields, including custom user templates. The reason MUST be contextual — a bare "không rõ" / "N/A" / "TBD" without explanation is still forbidden.
 4. REFINE / PATCH MODE — If a Target Buffer (existing profile) is provided in the input, treat it as the baseline. PRESERVE every field not explicitly affected by the user's patch instruction. Do NOT clear, blank, shorten, or replace untouched fields with placeholders. Only modify the fields targeted by the patch (and any directly implied by it). Any field that was previously blank MUST now be filled (subject to rules 2 and 3).
 
 [Constraint]: Do NOT include any "Little Theater", "Small Theater", scene descriptions, internal monologues, or CoT status bars. STRICTLY YAML DATA ONLY. Every leaf key in the schema MUST have a non-empty value (a properly-explained timeline placeholder counts as non-empty per rule 3). Before finishing, silently re-check the output and fill in any field that is still blank.
@@ -292,7 +292,7 @@ const defaultChatInferPrompt =
    (c) Reasonable, context-consistent inference derived from tone, worldview, relationships, and common sense.
 3b. OUTPUT LANGUAGE — Write ALL values in **Vietnamese (Tiếng Việt)** with full diacritics, even when the chat history is in another language. Keep the schema's keys byte-identical to the target schema; do NOT translate, reorder, rename, or re-spell them. Copy every key character for character, including its spaces, punctuation, parentheses and capitalisation. In particular, NEVER replace a space inside a key with an underscore. Proper nouns may keep their original spelling.
 4. MANDATORY COMPLETENESS — NEVER leave any field blank. You MUST fill EVERY leaf field in the target schema with a concrete, non-empty value. Do NOT output empty strings, null, "-", or lazy placeholders such as a bare "không rõ", "unknown", "N/A", "chưa xác định", "TBD", "chưa có". If a field cannot be directly determined from chat/images, generate the most reasonable value consistent with the observed personality, context, and worldview — but do NOT contradict existing evidence.
-5. LIFECYCLE / TIMELINE EXCEPTION — A leaf field MAY contain a narrative-meaningful placeholder ONLY when its content corresponds to a life stage, age bracket, or canonical event the user character has NOT YET reached or experienced in the chat history / source materials (e.g. a 24-year-old's "Thời_trung_niên_35_đến_nay" / old-age stage; an unborn descendant; an event scheduled for later in the story). In such cases, write a clear, contextual placeholder in Vietnamese that EXPLICITLY states the reason, such as 「Chưa xảy ra (nhân vật mới X tuổi, chưa tới giai đoạn này)」, 「Chưa tới giai đoạn này」, or 「Cốt truyện chưa đề cập」. This applies generically to ANY template's time-locked / future-locked fields, including custom user templates. A bare "không rõ" / "N/A" / "TBD" without a contextual reason is still forbidden.
+5. LIFECYCLE / TIMELINE EXCEPTION — A leaf field MAY contain a narrative-meaningful placeholder ONLY when its content corresponds to a life stage, age bracket, or canonical event the user character has NOT YET reached or experienced in the chat history / source materials (e.g. a 24-year-old's "Thời trung niên (35 đến nay)" / old-age stage; an unborn descendant; an event scheduled for later in the story). In such cases, write a clear, contextual placeholder in Vietnamese that EXPLICITLY states the reason, such as 「Chưa xảy ra (nhân vật mới X tuổi, chưa tới giai đoạn này)」, 「Chưa tới giai đoạn này」, or 「Cốt truyện chưa đề cập」. This applies generically to ANY template's time-locked / future-locked fields, including custom user templates. A bare "không rõ" / "N/A" / "TBD" without a contextual reason is still forbidden.
 6. If an existing profile is provided above, PRESERVE content still consistent with the chat, ADD newly revealed traits, UPDATE evolved traits, and ENRICH with observed patterns. Any field that was previously blank MUST now be filled (subject to rules 4 and 5).
 7. If no existing profile is provided, create a complete new profile from scratch.
 8. When avatar / reference images are attached, you MUST use them to fully populate appearance-related fields (hair, eyes, skin, face, build, typical outfit, etc.). Appearance fields must never remain blank when an image is provided.
@@ -1258,7 +1258,7 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
         if (wrappedWi && wrappedWi.trim().length > 0) promptArray.push({ role: 'system', content: wrappedWi });
 
         if (selectedAvatarImages.length > 0) {
-            const lifecycleHint = `For lifecycle / timeline fields whose stage the character has NOT yet reached (e.g. a 24-year-old's "Thời_trung_niên_35_đến_nay" / old-age stage, an unborn descendant, a future plot beat), you MAY use a narrative-meaningful placeholder that EXPLICITLY states the reason, such as 「Chưa xảy ra (nhân vật mới X tuổi, chưa tới giai đoạn này)」, 「Chưa tới giai đoạn này」, or 「Cốt truyện chưa đề cập」 — this applies generically to ANY user template's time-locked fields. Bare "không rõ" / "N/A" without a contextual reason is still forbidden.`;
+            const lifecycleHint = `For lifecycle / timeline fields whose stage the character has NOT yet reached (e.g. a 24-year-old's "Thời trung niên (35 đến nay)" / old-age stage, an unborn descendant, a future plot beat), you MAY use a narrative-meaningful placeholder that EXPLICITLY states the reason, such as 「Chưa xảy ra (nhân vật mới X tuổi, chưa tới giai đoạn này)」, 「Chưa tới giai đoạn này」, or 「Cốt truyện chưa đề cập」 — this applies generically to ANY user template's time-locked fields. Bare "không rõ" / "N/A" without a contextual reason is still forbidden.`;
             const avatarHint = isNpcMode
                 ? `[Reference Image(s): The above ${selectedAvatarImages.length > 1 ? 'images are' : 'image is'} provided as visual reference for the NPC character(s). Use them to FULLY populate appearance-related fields (hair, eyes, skin tone, face shape, build, typical outfit, age impression, etc.) — appearance fields MUST NOT remain blank. For all non-appearance fields, still output concrete, context-consistent values; the final YAML MUST have NO empty fields. ${lifecycleHint}]`
                 : `[User Avatar Image(s): The above ${selectedAvatarImages.length > 1 ? 'images are' : 'image is'} the user's avatar/profile pictures. Use them to FULLY populate appearance-related fields (hair, eyes, skin tone, face shape, build, typical outfit, age impression, etc.) — appearance fields MUST NOT remain blank. For fields not visible in the image, still produce reasonable, context-consistent values based on chat history, source materials, and the overall persona; the final YAML MUST have NO empty fields. ${lifecycleHint}]`;
@@ -1487,16 +1487,24 @@ function safeLocalStorageSet(key, value) {
     }
 }
 
-// Dãy khoá cấp 1 của hai mẫu YAML mặc định bản tiếng Trung (v3.4.6 trở về trước).
-const LEGACY_CN_USER_KEYS = ['基本信息','背景故事','家庭背景','社交关系','社会地位','外貌','衣着风格','性格','生活习惯','工作行为','情绪表现','人生目标','缺点弱点','喜好厌恶','能力技能','NSFW'];
-const LEGACY_CN_NPC_KEYS = ['基本信息','家庭背景','外貌特征','性格特质','背景故事','人际关系','喜好厌恶','NSFW'];
+// Dãy khoá cấp 1 của các bản mẫu mặc định đã từng phát hành.
+// Bản tiếng Trung (v3.4.6 trở về trước) và bản Việt hoá nối bằng gạch dưới —
+// gạch dưới chỉ là cách né việc bộ phân tích cũ không nhận khoá có dấu cách.
+const LEGACY_USER_KEY_SETS = [
+    ['基本信息','背景故事','家庭背景','社交关系','社会地位','外貌','衣着风格','性格','生活习惯','工作行为','情绪表现','人生目标','缺点弱点','喜好厌恶','能力技能','NSFW'],
+    ['Thông_tin_cơ_bản','Câu_chuyện_nền','Hoàn_cảnh_gia_đình','Quan_hệ_xã_hội','Địa_vị_xã_hội','Ngoại_hình','Phong_cách_ăn_mặc','Tính_cách','Thói_quen_sinh_hoạt','Tác_phong_làm_việc','Biểu_hiện_cảm_xúc','Mục_tiêu_cuộc_đời','Khuyết_điểm_và_điểm_yếu','Sở_thích_và_điều_ghét','Năng_lực_và_kỹ_năng','NSFW']
+];
+const LEGACY_NPC_KEY_SETS = [
+    ['基本信息','家庭背景','外貌特征','性格特质','背景故事','人际关系','喜好厌恶','NSFW'],
+    ['Thông_tin_cơ_bản','Hoàn_cảnh_gia_đình','Đặc_điểm_ngoại_hình','Đặc_điểm_tính_cách','Câu_chuyện_nền','Quan_hệ_giao_tiếp','Sở_thích_và_điều_ghét','NSFW']
+];
 
-// Chỉ thay khi mẫu đang lưu trùng khít mặc định cũ; mẫu người dùng tự sửa được giữ nguyên.
-function migrateLegacyCnTemplate(stored, legacyKeys, def) {
+// Chỉ thay khi mẫu đang lưu trùng khít một bản mặc định cũ; mẫu người dùng tự sửa giữ nguyên.
+function migrateLegacyTemplate(stored, legacyKeySets, def) {
     if (!stored) return def;
     const keys = [...parseYamlToBlocks(stored).keys()];
-    if (keys.length === legacyKeys.length && keys.every((k, i) => k === legacyKeys[i])) return def;
-    return stored;
+    const matches = set => keys.length === set.length && keys.every((k, i) => k === set[i]);
+    return legacyKeySets.some(matches) ? def : stored;
 }
 
 function loadData() {
@@ -1594,13 +1602,13 @@ function loadData() {
             const oldT = localStorage.getItem(STORAGE_KEY_TEMPLATE);
             if(oldT && oldT.length > 50) userContext.template = oldT;
         }
-        userContext.template = migrateLegacyCnTemplate(userContext.template, LEGACY_CN_USER_KEYS, defaultYamlTemplate);
+        userContext.template = migrateLegacyTemplate(userContext.template, LEGACY_USER_KEY_SETS, defaultYamlTemplate);
     } catch { userContext = { template: defaultYamlTemplate, request: "", result: "", hasResult: false }; }
 
     try {
         const n = JSON.parse(localStorage.getItem(STORAGE_KEY_DATA_NPC));
         npcContext = n || { template: defaultNpcTemplate, request: "", result: "", hasResult: false };
-        npcContext.template = migrateLegacyCnTemplate(npcContext.template, LEGACY_CN_NPC_KEYS, defaultNpcTemplate);
+        npcContext.template = migrateLegacyTemplate(npcContext.template, LEGACY_NPC_KEY_SETS, defaultNpcTemplate);
     } catch { npcContext = { template: defaultNpcTemplate, request: "", result: "", hasResult: false }; }
 }
 

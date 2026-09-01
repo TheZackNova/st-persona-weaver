@@ -12,7 +12,7 @@ Khoá viết tự nhiên được: `Họ và tên:`, `Đặc điểm ngoại hì
 
 AI được yêu cầu chép khoá **y nguyên từng ký tự** theo mẫu đang dùng, không dịch, không đổi thứ tự, không đổi cách viết. Nếu kết quả trả về sai kiểu khoá so với mẫu, đó là lỗi — hãy báo.
 
-Hai mẫu mặc định kèm theo vẫn dùng gạch dưới (`Thông_tin_cơ_bản`) do lịch sử để lại; mẫu tự soạn không cần theo.
+Hai mẫu mặc định kèm theo cũng viết bằng dấu cách (`Thông tin cơ bản`, `Câu chuyện nền`, `Thời trung niên (35 đến nay)`). Nếu bác đang dùng mẫu mặc định bản cũ — tiếng Trung hoặc bản Việt nối bằng gạch dưới — nó sẽ **tự chuyển** sang bản mới khi mở lại. Mẫu bác đã tự sửa thì giữ nguyên, không bị đụng tới.
 
 ## ✨ Tính năng chính
 
