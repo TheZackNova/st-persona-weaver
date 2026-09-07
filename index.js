@@ -1499,6 +1499,20 @@ const LEGACY_NPC_KEY_SETS = [
     ['Thông_tin_cơ_bản','Hoàn_cảnh_gia_đình','Đặc_điểm_ngoại_hình','Đặc_điểm_tính_cách','Câu_chuyện_nền','Quan_hệ_giao_tiếp','Sở_thích_và_điều_ghét','NSFW']
 ];
 
+// Vết nhận dạng các bộ prompt mặc định đã nghỉ hưu. Prompt đang lưu trong localStorage
+// còn mang một trong các dấu này là bản mặc định cũ chưa từng được sửa có chủ đích,
+// nên thay bằng mặc định hiện hành. Không dấu nào xuất hiện trong bản mặc định hiện tại.
+const RETIRED_PROMPT_SIGNATURES = [
+    'Simplified Chinese (简体中文)',                 // mặc định tiếng Trung: ép khoá chữ Hán
+    '现年X岁，未达此阶段）」',                        // mặc định tiếng Trung v3.4.6
+    'Join words with underscores',                   // Việt hoá v1: ép khoá nối bằng gạch dưới
+    'do NOT translate, reorder, or rename them.'     // Việt hoá v1: thiếu điều khoản cấm đổi dấu cách thành gạch dưới
+];
+
+function isRetiredDefaultPrompt(stored) {
+    return !!stored && RETIRED_PROMPT_SIGNATURES.some(sig => stored.includes(sig));
+}
+
 // Chỉ thay khi mẫu đang lưu trùng khít một bản mặc định cũ; mẫu người dùng tự sửa giữ nguyên.
 function migrateLegacyTemplate(stored, legacyKeySets, def) {
     if (!stored) return def;
@@ -1511,14 +1525,8 @@ function loadData() {
     try { historyCache = JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY)) || []; } catch { historyCache = []; }
     try {
         const p = JSON.parse(localStorage.getItem(STORAGE_KEY_PROMPTS));
-        // Dấu vết của bộ prompt mặc định tiếng Trung (v3.4.6 trở về trước).
-        // Bản Việt hoá dùng 「Chưa xảy ra ...」 nên chuỗi này chỉ còn tồn tại ở
-        // prompt mặc định cũ chưa từng bị người dùng sửa -> nâng cấp sang mặc định mới.
-        const CN_DEFAULT_SIG = '现年X岁，未达此阶段）」';
-        const isLegacyCnDefault = (s) => !!s && s.includes(CN_DEFAULT_SIG);
-
         const migrateTemplatePrompt = (stored, def) =>
-            (stored && stored.includes('{{userRequirements}}') && !stored.includes('Simplified Chinese (简体中文)')) ? stored : def;
+            (stored && stored.includes('{{userRequirements}}') && !isRetiredDefaultPrompt(stored)) ? stored : def;
         // Dấu "miễn trừ vòng đời/mốc thời gian" có từ v3.4.6, dùng để nhận ra giá trị mặc định bản cũ
         const V345_PROHIBIT_SIG = 'Do NOT output empty strings, "未知", "unknown", "N/A", "待定", "TBD", "暂无", null, "-", or placeholders.';
         const hasLifecycleExc = (s) => s.includes('LIFECYCLE / TIMELINE EXCEPTION') || s.includes('尚未发生（角色');
@@ -1529,7 +1537,7 @@ function loadData() {
         //  - người dùng đã tự sửa sâu -> giữ nguyên
         const migrateChatInferPrompt = (stored, def) => {
             if (!stored) return def;
-            if (isLegacyCnDefault(stored)) return def;
+            if (isRetiredDefaultPrompt(stored)) return def;
             const hasOldRule = stored.includes('Base the profile ONLY on evidence from the chat history. Do NOT invent unsupported traits.')
                 || stored.includes('If certain fields cannot be determined, make reasonable inferences.');
             const hasNewGuard = stored.includes('MANDATORY COMPLETENESS') || stored.includes('NEVER leave any field blank');
@@ -1544,7 +1552,7 @@ function loadData() {
         //  - nội dung người dùng tự sửa sâu giữ nguyên
         const migrateGenPrompt = (stored, def, signature) => {
             if (!stored) return def;
-            if (isLegacyCnDefault(stored)) return def;
+            if (isRetiredDefaultPrompt(stored)) return def;
             const hasNewGuard = stored.includes('MANDATORY COMPLETENESS') || stored.includes('NEVER leave any field blank');
             if (hasNewGuard) {
                 if (!hasLifecycleExc(stored) && stored.includes(signature) && stored.includes(V345_PROHIBIT_SIG)) {

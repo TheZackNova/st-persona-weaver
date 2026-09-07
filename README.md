@@ -46,13 +46,13 @@ Hai mẫu mặc định kèm theo cũng viết bằng dấu cách (`Thông tin c
 1.  Dán link trang Fandom vào ô yêu cầu, ví dụ `https://genshin-impact.fandom.com/vi/wiki/Furina`. Cả dạng có mã ngôn ngữ (`/vi/wiki/`) lẫn dạng không có đều nhận.
 2.  Thanh xanh hiện ra bên dưới ô nhập — nhấn **Tải nội dung Wiki**.
 3.  Link trong ô yêu cầu được thay bằng nhãn gọn `[Wiki: Tên trang]`; nội dung nằm sẵn trong bộ nhớ tạm. Dòng trạng thái cho biết đã gộp mấy mục con và tên của chúng.
-4.  Nhấn nút tạo. Nội dung wiki (tối đa 15.000 ký tự) được đính kèm làm khối tham chiếu.
+4.  Nhấn nút tạo. Nội dung wiki được đính kèm làm khối tham chiếu, giới hạn bởi hằng số `WIKI_CHAR_BUDGET` trong `index.js` (mặc định 55.000 ký tự).
 
 **Mục con.** Nhiều wiki nhân vật tách tư liệu ra trang riêng — `Carrera` có thêm `Carrera/Abilities & gear`, `Carrera/Chronology`, `Carrera/Relationships`. Tiện ích tự liệt kê và tải tối đa 12 mục con trong **một** lần gọi API, đánh dấu từng phần bằng `### Tên trang`.
 
 Hai loại mục con bị bỏ: trang ảnh (`/Gallery`, `/Image Gallery`, `/Images`, `/Thư viện`) vì hầu như chỉ có chú thích và tên tệp, và mục con đã được nhúng sẵn trong trang chính vì sẽ bị đếm hai lần. Chỉ khớp khi **cả đoạn tên** trùng — `/Gallery of Heroes` vẫn được giữ.
 
-Nếu tổng vượt 15.000 ký tự, ngân sách được chia đều rồi rót phần thừa của mục ngắn sang mục dài — một mục con khổng lồ không thể chiếm hết chỗ của trang chính, và phần bị cắt có đánh dấu `…(đã cắt bớt)`. Lấy mục con thất bại thì trang chính vẫn dùng được bình thường.
+Nếu tổng vượt ngân sách, nó được chia đều rồi rót phần thừa của mục ngắn sang mục dài — một mục con khổng lồ không thể chiếm hết chỗ của trang chính, và phần bị cắt có đánh dấu `…(đã cắt bớt)`. Lấy mục con thất bại thì trang chính vẫn dùng được bình thường.
 
 Bộ nhớ tạm **bị xoá sau mỗi lần sinh** để không âm thầm gắn lại tư liệu cũ vào các yêu cầu sau. Cần dùng lại thì tải lại — thanh sẽ tự hiện khi nhãn/link vẫn còn trong ô yêu cầu.
 
