@@ -14,6 +14,19 @@ AI được yêu cầu chép khoá **y nguyên từng ký tự** theo mẫu đan
 
 Hai mẫu mặc định kèm theo cũng viết bằng dấu cách (`Thông tin cơ bản`, `Câu chuyện nền`, `Thời trung niên (35 đến nay)`). Nếu bác đang dùng mẫu mặc định bản cũ — tiếng Trung hoặc bản Việt nối bằng gạch dưới — nó sẽ **tự chuyển** sang bản mới khi mở lại. Mẫu bác đã tự sửa thì giữ nguyên, không bị đụng tới.
 
+### Không còn prefill
+
+Model đời mới (ví dụ Claude 4.6 trở lên, một số proxy) từ chối request kết thúc bằng lượt `assistant`. Tiện ích **không gửi prefill nữa**: request luôn kết thúc bằng lượt `user`, và cuối lượt đó là khối `[Output Format]` yêu cầu trả đúng một khối ```` ```yaml ````, dòng đầu là khoá đầu tiên của mẫu đang dùng.
+
+Prompt có hai chỗ trống mới (có nút chèn trong trình sửa prompt):
+
+- `{{wikiReference}}` — nội dung Fandom Wiki đã tải. Prompt mặc định đặt nó trong khối tư liệu.
+- `{{outputFormat}}` — khối định dạng đầu ra. Prompt mặc định đặt nó ở dòng cuối.
+
+Prompt tự viết không có hai chỗ trống này vẫn chạy: wiki rồi khối định dạng được nối vào cuối. Prompt mặc định bản trước (chưa sửa) tự chuyển sang bản mới khi mở lại.
+
+Nếu đi qua SillyTavern (không dùng API độc lập), mà vẫn gặp lỗi prefill, hãy xoá trống ô **Assistant Prefill** trong cài đặt Chat Completion của SillyTavern — SillyTavern có thể tự chèn ô đó khi gửi, tiện ích không kiểm soát được.
+
 ## ✨ Tính năng chính
 
 *   **Sinh nội dung bằng AI**: từ một mô tả ngắn bằng ngôn ngữ tự nhiên (hoặc mẫu YAML có sẵn), tự động tạo ra hồ sơ nhân vật có cấu trúc, chi tiết.

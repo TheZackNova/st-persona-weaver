@@ -144,6 +144,7 @@ const defaultTemplateGenPrompt =
 {{currentTemplate}}
 
 {{userRequirements}}
+{{wikiReference}}
 
 <requirements>
 1. Language: **Vietnamese (Tiếng Việt)** keys, written with full diacritics.
@@ -164,7 +165,9 @@ const defaultTemplateGenPrompt =
 [Constraint]: Do NOT include any "Little Theater", scene descriptions, or values. STRICTLY YAML KEYS ONLY.
 
 [Action]:
-Output the YAML template now. No explanations.`;
+Output the YAML template now. No explanations.
+
+{{outputFormat}}`;
 
 // 2.1 Prompt gộp: tạo/trau chuốt mẫu NPC
 const defaultNpcTemplateGenPrompt = 
@@ -175,6 +178,7 @@ const defaultNpcTemplateGenPrompt =
 {{currentTemplate}}
 
 {{userRequirements}}
+{{wikiReference}}
 
 <requirements>
 1. Language: **Vietnamese (Tiếng Việt)** keys, written with full diacritics.
@@ -195,7 +199,9 @@ const defaultNpcTemplateGenPrompt =
 [Constraint]: Do NOT include any "Little Theater", scene descriptions, or values. STRICTLY YAML KEYS ONLY.
 
 [Action]:
-Output the YAML template now. No explanations.`;
+Output the YAML template now. No explanations.
+
+{{outputFormat}}`;
 
 // 2.2 Bí danh cũ — merged into gen prompts
 const defaultTemplateRefinePrompt = defaultTemplateGenPrompt;
@@ -211,6 +217,7 @@ const defaultPersonaGenPrompt =
 <source_materials>
 {{charInfo}}
 {{greetings}}
+{{wikiReference}}
 </source_materials>
 
 <target_schema>
@@ -229,7 +236,9 @@ const defaultPersonaGenPrompt =
 [Constraint]: Do NOT include any "Little Theater", "Small Theater", scene descriptions, internal monologues, or CoT status bars. STRICTLY YAML DATA ONLY. Every leaf key in the schema MUST have a non-empty value (a properly-explained timeline placeholder counts as non-empty per rule 3). Before finishing, silently re-check the output and fill in any field that is still blank.
 
 [Action]:
-Output ONLY the YAML data matching the schema, with every field populated.`;
+Output ONLY the YAML data matching the schema, with every field populated.
+
+{{outputFormat}}`;
 
 // 4. Prompt tạo/trau chuốt nhân vật NPC
 const defaultNpcGenPrompt = 
@@ -239,6 +248,7 @@ const defaultNpcGenPrompt =
 <story_context>
 {{charInfo}}
 {{userPersona}}
+{{wikiReference}}
 </story_context>
 
 <target_schema>
@@ -260,7 +270,9 @@ const defaultNpcGenPrompt =
 [Constraint]: Do NOT include any "Little Theater", "Small Theater", scene descriptions, internal monologues, or CoT status bars. STRICTLY YAML DATA ONLY. Every leaf key in the schema MUST have a non-empty value for every NPC (a properly-explained timeline placeholder counts as non-empty per rule 6). Before finishing, silently re-check the output and fill in any field that is still blank.
 
 [Action]:
-Output ONLY the YAML data matching the schema, with every field populated.`;
+Output ONLY the YAML data matching the schema, with every field populated.
+
+{{outputFormat}}`;
 
 // 5. Prompt suy luận/cập nhật User từ lịch sử chat
 const defaultChatInferPrompt =
@@ -275,6 +287,7 @@ const defaultChatInferPrompt =
 
 <source_materials>
 {{charInfo}}
+{{wikiReference}}
 </source_materials>
 
 <target_schema>
@@ -301,7 +314,9 @@ const defaultChatInferPrompt =
 [Constraint]: STRICTLY YAML DATA ONLY. No explanations, no scene descriptions. Every leaf key in the schema MUST have a non-empty value (a properly-explained timeline placeholder counts as non-empty per rule 5). Before finishing, silently re-check the output and fill in any field that is still blank.
 
 [Action]:
-Output the COMPLETE YAML profile matching the schema, with every field populated.`;
+Output the COMPLETE YAML profile matching the schema, with every field populated.
+
+{{outputFormat}}`;
 
 // 6. Prompt suy luận/cập nhật NPC từ lịch sử chat
 const defaultNpcChatInferPrompt =
@@ -317,6 +332,7 @@ const defaultNpcChatInferPrompt =
 <story_context>
 {{charInfo}}
 {{userPersona}}
+{{wikiReference}}
 </story_context>
 
 <target_schema>
@@ -344,7 +360,9 @@ const defaultNpcChatInferPrompt =
 [Constraint]: STRICTLY YAML DATA ONLY. No explanations, no scene descriptions. Every leaf key in the schema MUST have a non-empty value (a properly-explained timeline placeholder counts as non-empty per rule 6). Before finishing, silently re-check the output and fill in any field that is still blank.
 
 [Action]:
-Output the COMPLETE YAML profile matching the schema, with every field populated.`;
+Output the COMPLETE YAML profile matching the schema, with every field populated.
+
+{{outputFormat}}`;
 
 // Legacy alias
 const defaultChatUpdatePrompt = defaultChatInferPrompt;
@@ -827,12 +845,43 @@ function findMatchingKey(targetKey, map) {
     return null;
 }
 
-// Mồi câu trả lời bằng đúng khoá đầu tiên của schema đang dùng.
-// Mồi bằng một khoá cứng sẽ dạy model kiểu đặt tên khác với mẫu — đó là lý do
-// mẫu viết bằng dấu cách vẫn nhận về kết quả nối bằng gạch dưới.
-function buildYamlPrefill(template) {
-    const firstKey = [...parseYamlToBlocks(template).keys()][0];
-    return firstKey ? "```yaml\n" + firstKey + ":" : "```yaml\n";
+// Model đời mới (Claude 4.6+ và nhiều proxy) từ chối cuộc hội thoại kết thúc bằng lượt
+// assistant, nên không còn mồi câu trả lời bằng prefill. Thay vào đó lượt user kết thúc
+// bằng khối [Output Format] này. Khoá đầu vẫn lấy đúng từ schema đang dùng: nêu một khoá
+// cứng sẽ dạy model kiểu đặt tên khác với mẫu.
+function buildOutputFormatDirective({ template, isTemplateMode, isNpcMode }) {
+    const firstKey = isTemplateMode ? null : [...parseYamlToBlocks(template).keys()][0];
+    const lines = [
+        '[Output Format]:',
+        '- Reply with exactly ONE fenced YAML code block and nothing else: no preamble, no explanation, no closing remarks, no text before or after the block.',
+        firstKey
+            ? `- The first line of your reply MUST be \`\`\`yaml and the second line MUST start with the schema's first key, copied exactly: ${firstKey}:`
+            : '- The first line of your reply MUST be ```yaml and the YAML keys start on the second line.',
+        '- Close the block with ``` on its own line.'
+    ];
+    if (isNpcMode && !isTemplateMode) {
+        lines.push('- When outputting several NPCs, keep ALL of them inside this single block, separated by a line containing only ---.');
+    }
+    return lines.join('\n');
+}
+
+// Đặt khối wiki và khối định dạng đầu ra vào prompt. Prompt có chỗ trống {{wikiReference}} /
+// {{outputFormat}} thì điền vào đó; prompt tự viết không có chỗ trống thì nối vào cuối,
+// và khối định dạng luôn đứng sau cùng để lượt user kết thúc bằng chỉ dẫn đầu ra.
+// Dùng hàm thay thế để ký tự $ trong nội dung wiki không bị hiểu là mẫu thay thế.
+function placeTrailingBlocks(content, wikiRef, outputFormat) {
+    let out = content;
+    if (out.includes('{{wikiReference}}')) {
+        out = out.replace(/{{wikiReference}}/g, () => wikiRef);
+    } else if (wikiRef) {
+        out = out.replace(/\s*$/, '') + '\n\n' + wikiRef;
+    }
+    if (out.includes('{{outputFormat}}')) {
+        out = out.replace(/{{outputFormat}}/g, () => outputFormat);
+    } else {
+        out = out.replace(/\s*$/, '') + '\n\n' + outputFormat;
+    }
+    return out;
 }
 
 async function collectContextData() {
@@ -1117,7 +1166,6 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
     }
 
     let userMessageContent = "";
-    let prefillContent = buildYamlPrefill(getCurrentTemplate());
 
     if (isTemplateMode) {
         const isRefine = data.mode === 'refine';
@@ -1148,8 +1196,6 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
         if (reqBlock && !userMessageContent.includes('[User Requirements]')) {
             userMessageContent += '\n\n' + reqBlock;
         }
-
-        prefillContent = "```yaml\n";
     } else if (chatInferEnabled) {
         const targetName = isNpcMode ? charName : currentName;
         const existingBlock = (currentText && currentText.trim().length > 20)
@@ -1186,16 +1232,18 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
             .replace(/{{chatHistory}}/g, wrappedChatHistory);
     }
 
-    // Nội dung wiki đã tải được đính kèm như một khối tham chiếu. Phần cắt thật đã làm
-    // lúc tải (allocateWikiBudget chia đều cho trang chính và các mục con); chỗ này chỉ
-    // là chốt chặn. Cache bị xoá sau khi sinh xong (xem #pw-btn-gen).
-    if (wikiDataCache && wikiDataCache.plainText) {
-        const wikiRef = wrapAsXiTaReference(
+    // Nội dung wiki đã tải được đính kèm như một khối tham chiếu, đặt vào chỗ trống
+    // {{wikiReference}} trong khối tư liệu. Phần cắt thật đã làm lúc tải (allocateWikiBudget
+    // chia đều cho trang chính và các mục con); chỗ này chỉ là chốt chặn. Cache bị xoá sau
+    // khi sinh xong (xem #pw-btn-gen).
+    const wikiRef = (wikiDataCache && wikiDataCache.plainText)
+        ? wrapAsXiTaReference(
             wikiDataCache.plainText.substring(0, WIKI_CHAR_BUDGET),
             `Wiki Reference: ${wikiDataCache.title} (${wikiDataCache.subdomain}.fandom.com)`
-        );
-        userMessageContent = userMessageContent + '\n\n' + wikiRef;
-    }
+        )
+        : '';
+    const outputFormat = buildOutputFormatDirective({ template: getCurrentTemplate(), isTemplateMode, isNpcMode });
+    userMessageContent = placeTrailingBlocks(userMessageContent, wikiRef, outputFormat);
 
     // Chỉ thị nhiều NPC đã nằm sẵn trong defaultNpcGenPrompt, không cần chèn lúc chạy
 
@@ -1271,11 +1319,8 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
         } else {
             promptArray.push({ role: 'user', content: userMessageContent });
         }
-        
-        const promptArrayNoPrefill = promptArray.map(m => ({ ...m }));
 
-        if (prefillContent) promptArray.push({ role: 'assistant', content: prefillContent });
-
+        // Không thêm lượt assistant (prefill): lượt cuối luôn là user.
         updateDebugView(promptArray);
 
         const doRequest = async (messages) => {
@@ -1413,23 +1458,18 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
             // Phân loại:
             //   1) Quá hạn do chính ta hủy (timedOutBySelf) — báo rõ và hướng dẫn, không tự thử lại (thử lại cũng quá hạn)
             //   2) AbortError khác / lỗi tầng mạng (TypeError: Failed to fetch, ...) — nêu nguyên nhân tầng mạng
-            //   3) 400 / Bad Request kèm prefill — bỏ prefill rồi thử lại (logic tương thích sẵn có)
-            //   4) Còn lại — ném nguyên trạng
+            //   3) Còn lại — ném nguyên trạng. Không còn nhánh "bỏ prefill rồi thử lại":
+            //      request không bao giờ kết thúc bằng lượt assistant nữa.
             const errStr = (err && (err.message || err.toString()) || '').toString();
             const errLower = errStr.toLowerCase();
             const isAbort = err && (err.name === 'AbortError' || errLower.includes('abort'));
             const isNetwork = err && (err.name === 'TypeError' || errLower.includes('failed to fetch') || errLower.includes('networkerror'));
-            const isBadRequest = errLower.includes('400') || errLower.includes('bad request') || errLower.includes('invalid');
 
             if (timedOutBySelf || (isAbort && controller.signal.aborted)) {
                 throw new Error(`Yêu cầu quá thời gian chờ (${timeoutSec}s): proxy bên thứ ba / Claude phản hồi quá chậm. Có thể tăng giá trị này trong 「Cài đặt API → Thời gian chờ」 (nên đặt 300~600 giây), hoặc kiểm tra proxy / độ ổn định mạng.`);
             }
 
-            if (prefillContent && isBadRequest) {
-                console.warn("[PW] Generation failed (400/Bad Request), retrying without prefill...", err);
-                toastr.info("API trả về lỗi 400 (có thể model như Gemini không hỗ trợ Prefill), đang thử lại ở chế độ tương thích...");
-                responseContent = await doRequest(promptArrayNoPrefill);
-            } else if (isNetwork) {
+            if (isNetwork) {
                 throw new Error(`Yêu cầu mạng thất bại: ${errStr}. Hãy kiểm tra địa chỉ proxy, API Key và kết nối mạng (VPN / proxy công ty có thể chặn).`);
             } else {
                 throw err;
@@ -1452,22 +1492,11 @@ async function runGeneration(data, apiConfig, isTemplateMode = false) {
     if (match && match[1]) {
         responseContent = match[1].trim(); 
     } else {
-        if (prefillContent && !responseContent.startsWith(prefillContent) && !responseContent.startsWith("```yaml")) {
-            const trimRes = responseContent.trim();
-            // Model đã nuốt mất khoá được mồi và trả thẳng phần con: ghép lại phần mồi.
-            // So theo khoá đầu của schema đang dùng thay vì một danh sách khoá cứng,
-            // để mẫu tự đặt tên nào cũng nhận ra được.
-            const prefillKey = prefillContent.replace(/^```yaml\n/, '').replace(/:$/, '').trim();
-            const resumesSchema = prefillKey && (
-                trimRes.startsWith(prefillKey) ||
-                responseContent.startsWith('  ') ||
-                responseContent.startsWith('\n')
-            );
-            if (!trimRes.startsWith("```yaml") && resumesSchema) {
-                 responseContent = prefillContent + responseContent;
-            }
-        }
-        responseContent = responseContent.replace(/^```[a-z]*\s*/i, '').replace(/\s*```$/, '').trim();
+        // Không có khối rào đóng đủ (thường do bị cắt giữa chừng, hoặc model bỏ rào):
+        // bỏ lời dẫn nằm trước rào mở nếu có, rồi gỡ rào còn sót.
+        const fenceAt = responseContent.search(/```(?:yaml)?[ \t]*\r?\n/i);
+        if (fenceAt > 0) responseContent = responseContent.slice(fenceAt);
+        responseContent = responseContent.replace(/^\s*```[a-z]*[ \t]*\r?\n?/i, '').replace(/\s*```\s*$/, '').trim();
     }
 
     return responseContent;
@@ -1513,6 +1542,18 @@ function isRetiredDefaultPrompt(stored) {
     return !!stored && RETIRED_PROMPT_SIGNATURES.some(sig => stored.includes(sig));
 }
 
+// Bản mặc định phát hành ngay trước khi bỏ prefill khác bản hiện hành đúng ở hai chỗ trống
+// {{wikiReference}} và {{outputFormat}}. Prompt đang lưu trùng khít bản đó là mặc định chưa
+// từng sửa, nên thay bằng bản hiện hành. So khít cả chuỗi nên prompt tự sửa không bị đụng;
+// prompt tự sửa vẫn chạy được vì khối định dạng đầu ra được nối vào cuối lúc gửi.
+function isPrefillEraDefault(stored, def) {
+    if (!stored) return false;
+    const previous = def
+        .replace(/\n\{\{wikiReference\}\}/g, '')
+        .replace(/\n\n\{\{outputFormat\}\}$/, '');
+    return previous !== def && stored === previous;
+}
+
 // Chỉ thay khi mẫu đang lưu trùng khít một bản mặc định cũ; mẫu người dùng tự sửa giữ nguyên.
 function migrateLegacyTemplate(stored, legacyKeySets, def) {
     if (!stored) return def;
@@ -1526,7 +1567,7 @@ function loadData() {
     try {
         const p = JSON.parse(localStorage.getItem(STORAGE_KEY_PROMPTS));
         const migrateTemplatePrompt = (stored, def) =>
-            (stored && stored.includes('{{userRequirements}}') && !isRetiredDefaultPrompt(stored)) ? stored : def;
+            (stored && stored.includes('{{userRequirements}}') && !isRetiredDefaultPrompt(stored) && !isPrefillEraDefault(stored, def)) ? stored : def;
         // Dấu "miễn trừ vòng đời/mốc thời gian" có từ v3.4.6, dùng để nhận ra giá trị mặc định bản cũ
         const V345_PROHIBIT_SIG = 'Do NOT output empty strings, "未知", "unknown", "N/A", "待定", "TBD", "暂无", null, "-", or placeholders.';
         const hasLifecycleExc = (s) => s.includes('LIFECYCLE / TIMELINE EXCEPTION') || s.includes('尚未发生（角色');
@@ -1537,7 +1578,7 @@ function loadData() {
         //  - người dùng đã tự sửa sâu -> giữ nguyên
         const migrateChatInferPrompt = (stored, def) => {
             if (!stored) return def;
-            if (isRetiredDefaultPrompt(stored)) return def;
+            if (isRetiredDefaultPrompt(stored) || isPrefillEraDefault(stored, def)) return def;
             const hasOldRule = stored.includes('Base the profile ONLY on evidence from the chat history. Do NOT invent unsupported traits.')
                 || stored.includes('If certain fields cannot be determined, make reasonable inferences.');
             const hasNewGuard = stored.includes('MANDATORY COMPLETENESS') || stored.includes('NEVER leave any field blank');
@@ -1552,7 +1593,7 @@ function loadData() {
         //  - nội dung người dùng tự sửa sâu giữ nguyên
         const migrateGenPrompt = (stored, def, signature) => {
             if (!stored) return def;
-            if (isRetiredDefaultPrompt(stored)) return def;
+            if (isRetiredDefaultPrompt(stored) || isPrefillEraDefault(stored, def)) return def;
             const hasNewGuard = stored.includes('MANDATORY COMPLETENESS') || stored.includes('NEVER leave any field blank');
             if (hasNewGuard) {
                 if (!hasLifecycleExc(stored) && stored.includes(signature) && stored.includes(V345_PROHIBIT_SIG)) {
@@ -2608,6 +2649,8 @@ async function openCreatorPopup() {
                         <div class="pw-var-btn" data-ins="{{currentText}}"><span>Bản hiện có</span><span class="code">{{currentText}}</span></div>
                         <div class="pw-var-btn" data-ins="{{currentTemplate}}"><span>Mẫu hiện tại</span><span class="code">{{currentTemplate}}</span></div>
                         <div class="pw-var-btn" data-ins="{{userRequirements}}"><span>Yêu cầu mẫu</span><span class="code">{{userRequirements}}</span></div>
+                        <div class="pw-var-btn" data-ins="{{wikiReference}}"><span>Tư liệu Wiki</span><span class="code">{{wikiReference}}</span></div>
+                        <div class="pw-var-btn" data-ins="{{outputFormat}}"><span>Định dạng đầu ra</span><span class="code">{{outputFormat}}</span></div>
                     </div>
                     <textarea id="pw-prompt-editor" class="pw-textarea pw-auto-height" style="min-height:150px; font-size:0.85em;"></textarea>
                     
